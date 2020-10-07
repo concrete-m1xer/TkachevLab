@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
 using namespace std;
 
 struct Pipe {
@@ -15,7 +16,7 @@ struct CompressorStation {
 	string name;
 	int shopsCount;
 	int workingShopsCount;
-	float efficiency;
+	double efficiency;
 };
 
 void WrongInput() {
@@ -23,35 +24,27 @@ void WrongInput() {
 	cin.ignore(10000, '\n');
 }
 
-Pipe AddPipe() {
+Pipe AddPipe(int i) {
 	Pipe p;
+	p.id = i;
 	do {
 		WrongInput();
- 		cout << "Type id: ";
-		cin >> p.id;
-	} while (cin.fail() || p.id == -1);
-	do {
-		WrongInput();
-		cout << "Type diametr: ";
+		cout << "Type pipe's diametr: ";
 		cin >> p.diametr;
-	} while (cin.fail());
+	} while (cin.fail() || p.diametr < 0);
 	do {
 		WrongInput();
-		cout << "Type length: ";
+		cout << "Type pipe's length: ";
 		cin >> p.length;
-	} while (cin.fail());
+	} while (cin.fail() || p.length < 0);
 	p.repair = false;
 	cout << endl;
 	return p;
 }
 
-CompressorStation AddCS() {
+CompressorStation AddCS(int j) {
 	CompressorStation CS;
-	do {
-		WrongInput();
-		cout << "Type Compressor Station's id: "; 
-		cin >> CS.id; 
-	} while (cin.fail() || CS.id == -1);
+	CS.id = j;
 	cout << "Type Compressor Station's name: "; 
 	cin >> CS.name; 
 	do {
@@ -64,7 +57,7 @@ CompressorStation AddCS() {
 		cout << "Type Compressor Station's count of working shops (less/equal than total!): "; 
 		cin >> CS.workingShopsCount; 
 	} while (cin.fail() || CS.workingShopsCount > CS.shopsCount || CS.workingShopsCount < 0);
-	CS.efficiency = (static_cast<double>(CS.workingShopsCount)/CS.shopsCount);
+	CS.efficiency = CS.workingShopsCount * (1./CS.shopsCount); // можно использовать static_cast с сайта docs.microsoft.com
 	cout << endl;
 	return CS;
 }
@@ -75,7 +68,7 @@ void PrintPipe(const Pipe& p) {
 	cout << "diametr: " << p.diametr << endl;
 	cout << "length: " << p.length << endl;
 	if (p.repair) {
-		cout << "The pipe is needs repiar" << endl;
+		cout << "The pipe is needs repair" << endl;
 	}
 	else {
 		cout << "The pipe doesn't need repair" << endl;
@@ -131,30 +124,34 @@ void EditCS(CompressorStation& CS) {
 	default:
 		cout << "This action unacceptable" << endl;
 	}
+	CS.efficiency = CS.workingShopsCount * (1. / CS.shopsCount);
 }
 
-void SaveData(const Pipe& p, const CompressorStation& cs) {
+void SaveData(const vector <Pipe>& c, const vector <CompressorStation>& c1) {
 	ofstream fout;
-	fout.open("data.txt", ios::out);
+	fout.open("data.txt", ios::out); //cyberforum "at end of file"
 	if (fout.is_open()) {
-		fout << p.id << endl << p.diametr << endl << p.length << endl;
-		if (p.repair) {
-			fout << "broken" << endl;
+		for (unsigned int i = 0; i < c.size() - 1; i++) { //в предупреждении предложил сделать i unsigned
+			fout << c[i].id << endl << c[i].diametr << endl << c[i].length << endl;
+			if (c[i].repair) {
+				fout << "broken" << endl;
+			}
+			else {
+				fout << "fixed" << endl;
+			}
+			fout << '\n';
+		}for (unsigned int i = 0; i < c1.size() - 1; i++) {
+			fout << c1[i].id << endl << c1[i].name << endl << c1[i].shopsCount
+				<< endl << c1[i].workingShopsCount << endl << c1[i].efficiency << endl;
+			fout << '\n';
 		}
-		else {
-			fout << "fixed" << endl;
-		}
-		fout << '\n';
-		fout << cs.id << endl << cs.name << endl << cs.shopsCount << endl << cs.workingShopsCount << endl
-			<< cs.efficiency << endl;
-		fout.close();
 	}
+	fout.close();
 }
 
 void LoadData(Pipe& p, CompressorStation& cs) {
 	ifstream fin;
 	fin.open("data.txt", ios::in);
-	char s;
 	if (fin.is_open()) {
 		fin >> p.id;
 		fin >> p.diametr;
@@ -179,6 +176,7 @@ void LoadData(Pipe& p, CompressorStation& cs) {
 		fin.close();
 	}
 }
+  //!!!
 
 bool isDefined(const Pipe& a) {
 	if (a.id == -1) {
@@ -199,19 +197,30 @@ bool isDefined(const CompressorStation& a) {
 }
 
 void NotDefined() {
-	cout << "At first, add pipe and station " << endl;
+	cout << "At first, add pipe or station " << endl;
 }
 
 int main() {
 	bool isRunning = true;
-	Pipe P;
-	CompressorStation CS;
-	P.id = -1;
-	CS.id = -1;
+	unsigned int i, j;
+	i = 0;
+	j = 0;
+	vector <Pipe> vecPipe;
+	vector <CompressorStation> vecCS;
+	vecPipe.resize(1);
+	vecCS.resize(1);
 	while (isRunning) {
-		cout << "Choose an action: " << endl << "1 - Add Pipe" << endl << "2 - Add Compretion Station" << endl
-			<< "3 - View all objects" << endl << "4 - Edit Pipe" << endl << "5 - Edit Compretion Station" << endl <<
-			"6 - Save to file" << endl << "7 - Load from file" << endl << "0 - Exit from Programm" << endl;
+		vecPipe[i].id = -1;
+		vecCS[j].id = -1;
+		cout << "Choose an action, please: \n" 
+			<< "1 - Add Pipe \n" 
+			<< "2 - Add Compretion Station \n"
+			<< "3 - View all objects \n" 
+			<< "4 - Edit Pipe \n" 
+			<< "5 - Edit Compretion Station \n" 
+			<< "6 - Save to file \n" 
+			<< "7 - Load from file \n" 
+			<< "0 - Exit from Programm" << endl;
 		int s;
 		do {
 			cin >> s;
@@ -219,46 +228,70 @@ int main() {
 		switch (s)
 		{
 		case 1:
-			P = AddPipe();
+			vecPipe[i] = AddPipe(i+1);
+			i++;
+			vecPipe.resize(i+1);
 			break;
 		case 2:
-			CS = AddCS();
+			vecCS[j] = AddCS(j+1);
+			j++;
+			vecCS.resize(j+1);
 			break;
 		case 3:
-			if (isDefined(P) && isDefined(CS)) {
-				PrintPipe(P);
-				PrintCS(CS);
+			if (isDefined(vecPipe[0]) || isDefined(vecCS[0])) {
+				for (int a = 0; a < i; a++) {
+					PrintPipe(vecPipe[a]);
+				}
+				for (int a = 0; a < j; a++) {
+					PrintCS(vecCS[a]); 
+				}
 			}
 			else {
 				NotDefined();
 			}
 			break;
 		case 4:
-			if (isDefined(P)) {
-				EditPipe(P);
+			if (isDefined(vecPipe[0])) {
+				int a;
+				do {
+					cout << "Please, enter correct number of pipe you want to edit" << endl;
+					WrongInput();
+					cin >> a;
+				} while (cin.fail() || a > i || a <= 0);
+				if (isDefined(vecPipe[a - 1])) {
+					EditPipe(vecPipe[a - 1]);
+				}
 			}
 			else {
 				NotDefined();
 			}
 			break;
 		case 5:
-			if (isDefined(CS)) {
-				EditCS(CS);
+			if (isDefined(vecCS[0])) {
+				int a;
+				do {
+					cout << "Please, enter correct number of Compressor Station you want to edit" << endl;
+					WrongInput();
+					cin >> a;
+				} while (cin.fail() || a > j || a < 0);
+				if (isDefined(vecCS[a - 1])) {
+					EditCS(vecCS[a - 1]);
+				}
 			}
 			else {
 				NotDefined();
 			}
 			break;
 		case 6:
-			if (isDefined(P)) {
-				SaveData(P, CS);
+			if (isDefined(vecPipe[0]) || isDefined(vecCS[0])) {
+				SaveData(vecPipe, vecCS);
 			}
 			else {
 				NotDefined();
 			}
 			break;
 		case 7:
-			LoadData(P, CS);
+			//LoadData(P, CS);
 			break;
 		case 0: 
 			isRunning = false;

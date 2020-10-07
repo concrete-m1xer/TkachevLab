@@ -18,23 +18,25 @@ struct CompressorStation {
 	float efficiency;
 };
 
+void WrongInput() {
+	cin.clear();
+	cin.ignore(10000, '\n');
+}
+
 Pipe AddPipe() {
 	Pipe p;
 	do {
-		cin.clear();
-		cin.ignore(10000, '\n');
+		WrongInput();
  		cout << "Type id: ";
 		cin >> p.id;
-	} while (cin.fail());
+	} while (cin.fail() || p.id == -1);
 	do {
-		cin.clear();
-		cin.ignore(10000, '\n');
+		WrongInput();
 		cout << "Type diametr: ";
 		cin >> p.diametr;
 	} while (cin.fail());
 	do {
-		cin.clear();
-		cin.ignore(10000, '\n');
+		WrongInput();
 		cout << "Type length: ";
 		cin >> p.length;
 	} while (cin.fail());
@@ -45,26 +47,23 @@ Pipe AddPipe() {
 
 CompressorStation AddCS() {
 	CompressorStation CS;
-	do { cin.clear(); 
-		cin.ignore(10000, '\n'); 
+	do {
+		WrongInput();
 		cout << "Type Compressor Station's id: "; 
 		cin >> CS.id; 
-	} while (cin.fail());
-	do { cin.clear();
-		cin.ignore(10000, '\n');
-		cout << "Type Compressor Station's name: "; 
-		cin >> CS.name; 
-	} while (cin.fail());
-	do { cin.clear();
-		cin.ignore(10000, '\n');
-		cout << "Type Compressor Station's count of shops: "; cin >> CS.shopsCount;
-	} while (cin.fail());
+	} while (cin.fail() || CS.id == -1);
+	cout << "Type Compressor Station's name: "; 
+	cin >> CS.name; 
 	do {
-		cin.clear();
-		cin.ignore(10000, '\n'); 
-		cout << "Type Compressor Station's count of working shops (less than total number!): "; 
+		WrongInput();
+		cout << "Type Compressor Station's count of shops: "; 
+		cin >> CS.shopsCount;
+	} while (cin.fail() || CS.shopsCount < 0);
+	do {
+		WrongInput();
+		cout << "Type Compressor Station's count of working shops (less/equal than total!): "; 
 		cin >> CS.workingShopsCount; 
-	} while (cin.fail() || CS.workingShopsCount > CS.shopsCount);
+	} while (cin.fail() || CS.workingShopsCount > CS.shopsCount || CS.workingShopsCount < 0);
 	CS.efficiency = (static_cast<double>(CS.workingShopsCount)/CS.shopsCount);
 	cout << endl;
 	return CS;
@@ -99,30 +98,38 @@ void EditPipe(Pipe& p) {
 }
 
 void EditCS(CompressorStation& CS) {
-	string s;
-	cout << "do you want add[1] or remove[0] working shops?" << endl;
-	cin >> s;
-	if (s == "1") {
+	int s;
+	cout << "do you want add[1] or remove[0] or add/remove several[2] working shops?" << endl;
+	do {
+		WrongInput();
+		cin >> s;
+	} while (cin.fail());
+	switch (s)
+	{
+	case 1:
 		if (CS.workingShopsCount < CS.shopsCount) {
 			CS.workingShopsCount += 1;
 		}
 		else {
 			cout << "can't get more working shops" << endl;
 		}
-		cout << "Shops (online): " << CS.workingShopsCount << endl;
-	}
-	else if (s == "0") {
+		break;
+	case 0:
 		if (CS.workingShopsCount > 0) {
 			CS.workingShopsCount -= 1;
 		}
 		else {
 			cout << "can't get less working shops" << endl;
 		}
-		cout << "Shops (online): " << CS.workingShopsCount << endl;
-	}
-	else {
-		cout << "input error" << endl;
-		cout << "Shops (online): " << CS.workingShopsCount << endl;
+		break;
+	case 2:
+		cout << "Enter number of shops you want to be online (less/equal than total!)" << endl;
+		do {
+			WrongInput();
+			cin >> CS.workingShopsCount;
+		} while (cin.fail() || CS.workingShopsCount > CS.shopsCount || CS.workingShopsCount < 0);
+	default:
+		cout << "This action unacceptable" << endl;
 	}
 }
 
@@ -137,17 +144,17 @@ void SaveData(const Pipe& p, const CompressorStation& cs) {
 		else {
 			fout << "fixed" << endl;
 		}
-		fout << cs.id << endl << cs.name << endl << cs.shopsCount << cs.workingShopsCount << endl << cs.workingShopsCount << endl
+		fout << '\n';
+		fout << cs.id << endl << cs.name << endl << cs.shopsCount << endl << cs.workingShopsCount << endl
 			<< cs.efficiency << endl;
 		fout.close();
 	}
 }
 
-Pipe LoadData() {
+void LoadData(Pipe& p, CompressorStation& cs) {
 	ifstream fin;
 	fin.open("data.txt", ios::in);
-	Pipe p;
-	CompressorStation cs;
+	char s;
 	if (fin.is_open()) {
 		fin >> p.id;
 		fin >> p.diametr;
@@ -170,12 +177,37 @@ Pipe LoadData() {
 		fin >> cs.workingShopsCount;
 		fin >> cs.efficiency;
 		fin.close();
-		return p;
 	}
+}
+
+bool isDefined(const Pipe& a) {
+	if (a.id == -1) {
+		return false;
+	}
+	else {
+		return true;
+	}
+}
+
+bool isDefined(const CompressorStation& a) {
+	if (a.id == -1) {
+		return false;
+	}
+	else { 
+		return true;
+	}
+}
+
+void NotDefined() {
+	cout << "At first, add pipe and station " << endl;
 }
 
 int main() {
 	bool isRunning = true;
+	Pipe P;
+	CompressorStation CS;
+	P.id = -1;
+	CS.id = -1;
 	while (isRunning) {
 		cout << "Choose an action: " << endl << "1 - Add Pipe" << endl << "2 - Add Compretion Station" << endl
 			<< "3 - View all objects" << endl << "4 - Edit Pipe" << endl << "5 - Edit Compretion Station" << endl <<
@@ -184,8 +216,6 @@ int main() {
 		do {
 			cin >> s;
 		} while (cin.fail());
-		Pipe P;
-		CompressorStation CS;
 		switch (s)
 		{
 		case 1:
@@ -195,20 +225,40 @@ int main() {
 			CS = AddCS();
 			break;
 		case 3:
-			PrintCS(CS);
-			PrintPipe(P);
+			if (isDefined(P) && isDefined(CS)) {
+				PrintPipe(P);
+				PrintCS(CS);
+			}
+			else {
+				NotDefined();
+			}
 			break;
 		case 4:
-			EditPipe(P);
+			if (isDefined(P)) {
+				EditPipe(P);
+			}
+			else {
+				NotDefined();
+			}
 			break;
 		case 5:
-			EditCS(CS);
+			if (isDefined(CS)) {
+				EditCS(CS);
+			}
+			else {
+				NotDefined();
+			}
 			break;
 		case 6:
-			SaveData(P, CS);
+			if (isDefined(P)) {
+				SaveData(P, CS);
+			}
+			else {
+				NotDefined();
+			}
 			break;
 		case 7:
-			P = LoadData();
+			LoadData(P, CS);
 			break;
 		case 0: 
 			isRunning = false;
@@ -217,7 +267,6 @@ int main() {
 			cout << "This command does not exist" << endl;
 			break;
 		}
-
 	}
 	return 0;
 }

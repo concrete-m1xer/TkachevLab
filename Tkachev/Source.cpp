@@ -163,7 +163,7 @@ void SaveData(const vector <Pipe>& c, const vector <CompressorStation>& c1)
 		fout << c1.size() << endl;
 		for (int i = 0; i < c.size(); i++) 
 		{
-			fout << endl << c[i].id << endl << c[i].diameter << endl << c[i].length;
+			fout << endl << c[i].id << endl << c[i].diameter << endl << c[i].length << endl;
 			if (c[i].repair) 
 			{
 				fout << "broken" << endl;
@@ -172,15 +172,15 @@ void SaveData(const vector <Pipe>& c, const vector <CompressorStation>& c1)
 			{
 				fout << "fixed" << endl;
 			}
-			fout << '\n';
 		}
 		for (int i = 0; i < c1.size(); i++) 
 		{
 			fout << endl << c1[i].id << endl << c1[i].name << endl << c1[i].shopsCount
-				<< endl << c1[i].workingShopsCount << endl << c1[i].efficiency;
+				<< endl << c1[i].workingShopsCount << endl << c1[i].efficiency << endl;
 		}
 	}
 	fout.close();
+	cout << "Data saved " << endl;
 }
 
 // Загрузка данных из файла
@@ -219,6 +219,7 @@ void LoadData(vector <Pipe>& c, vector <CompressorStation>& c1)
 			fin >> c1[i].workingShopsCount;
 			fin >> c1[i].efficiency;
 		}
+		cout << "Data loaded" << endl;
 	}
 }
 
@@ -251,7 +252,7 @@ bool findId(const vector<CompressorStation>& c, int id, int& a)
 
 // Удаление объектов
 void deleteObj(vector<Pipe>& c, int a) {
-	c.erase(c.begin() + a);// riptutorial.com/ru/cplusplus/example/2156/удаление-элементов
+	c.erase(c.begin() + a);// riptutorial.com/ru/cplusplus/example/2156/ удаление-элементов - удаляет выбранный элемент вектора и сдвигает все, что были справа
 }
 
 void deleteObj(vector<CompressorStation>& c, int a) {
@@ -340,6 +341,7 @@ int main()
 					tryInput(id, "Please, enter correct id of pipe you want to edit: ");
 				} while (cin.fail() || !findId(vecPipe, id, a));
 				EditPipe(vecPipe[a]);
+				PrintPipe(vecPipe[a]);
 			}
 			else 
 			{
@@ -354,6 +356,7 @@ int main()
 				{
 					tryInput(id , "Please, enter correct id of compressor station you want to edit: ");
 				} while (cin.fail() || !findId(vecCS, id, a));
+				PrintCS(vecCS[a]);
 				EditCS(vecCS[a]);
 			}
 			else 
@@ -413,7 +416,6 @@ int main()
 					tryInput(id, "Enter correct id of pipe you want to delete, please: ");
 				} while (cin.fail() || !findId(vecPipe, id, a));
 				deleteObj(vecPipe, a);
-//				i = a + 1;		id - индивидуален только для ныне живущих объектов?
 			}
 			else 
 			{

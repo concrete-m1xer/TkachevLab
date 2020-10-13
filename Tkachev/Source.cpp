@@ -286,7 +286,7 @@ int main()
 			<< "9 - View one compretion station \n"
 			<< "10 - Delete one pipe \n"
 			<< "11 - Delete one compretion station \n"
-			<< "0 - Exit from Programm" << endl;
+			<< "0 - Exit from Program" << endl;
 		int menu;
 		cin >> menu;
 		while (cin.fail())

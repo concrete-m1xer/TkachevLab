@@ -52,6 +52,40 @@ ostream& operator << (ostream& out, const CompressorStation& CS)
 	return out;
 }
 
+// в файл
+ifstream& operator >> (ifstream& fin, Pipe& pipe)
+{
+	fin >> pipe.id;
+	fin >> pipe.diameter;
+	fin >> pipe.length;
+	fin >> pipe.repair;
+	return fin;
+}
+
+ofstream& operator << (ofstream& fout, const Pipe& pipe)
+{
+	fout << endl << pipe.id << endl << pipe.diameter << endl << pipe.length << endl << pipe.repair << endl;
+	return fout;
+}
+
+ifstream& operator >> (ifstream& fin, CompressorStation& CS)
+{
+	fin >> CS.id;
+	fin >> CS.name;
+	fin >> CS.shopsCount;
+	fin >> CS.workingShopsCount;
+	fin >> CS.efficiency;
+	return fin;
+}
+
+ofstream& operator << (ofstream& fout, const CompressorStation& CS)
+{
+	fout << endl << CS.id << endl << CS.name << endl << CS.shopsCount
+		<< endl << CS.workingShopsCount << endl << CS.efficiency << endl;
+	return fout;
+}
+
+
 // Проверка правильности ввода  
 template <typename T>
 void tryInput( T& a, string alert) 
@@ -94,7 +128,10 @@ CompressorStation AddCS(int j)
 	{
 		tryInput(CS.workingShopsCount, "Type Compressor Station's count of working shops (less/equal than total!): ");
 	} while (cin.fail() || CS.workingShopsCount > CS.shopsCount || CS.workingShopsCount < 0);
-	CS.efficiency = CS.workingShopsCount * (1./CS.shopsCount); // можно использовать static_cast с сайта docs.microsoft.com
+	do
+	{
+		tryInput(CS.efficiency, "Type Compressor Station's efficiency (0 - 1000): ");
+	} while (cin.fail() || CS.efficiency > 1000 || CS.efficiency < 0);
 	cout << endl;
 	return CS;
 }
@@ -111,14 +148,14 @@ void EditCS(CompressorStation& CS)
 	int s;
 	do 
 	{
-		tryInput(s, "do you want add[1] or remove[0] or add/remove several[2] working shops? ");
+		tryInput(s, "do you want run[1] or stop[0] or run/stop several[2] working shops? ");
 	} while (cin.fail());
 	switch (s)
 	{
 	case 1:
 		if (CS.workingShopsCount < CS.shopsCount) 
 		{
-			CS.workingShopsCount += 1;
+			++CS.workingShopsCount;
 		}
 		else 
 		{
@@ -128,7 +165,7 @@ void EditCS(CompressorStation& CS)
 	case 0:
 		if (CS.workingShopsCount > 0) 
 		{
-			CS.workingShopsCount -= 1;
+			--CS.workingShopsCount;
 		}
 		else 
 		{
@@ -144,7 +181,6 @@ void EditCS(CompressorStation& CS)
 	default:
 		cout << "This action unacceptable " << endl;
 	}
-	CS.efficiency = CS.workingShopsCount * (1. / CS.shopsCount);
 }
 
 // Сохранение данных в файл
@@ -156,22 +192,13 @@ void SaveData(const vector <Pipe>& vecPipe, const vector <CompressorStation>& ve
 	{
 		fout << vecPipe.size() << endl;
 		fout << vecCS.size() << endl;
-		for (int i = 0; i < vecPipe.size(); i++) 
+		for (auto& c : vecPipe)
 		{
-			fout << endl << vecPipe[i].id << endl << vecPipe[i].diameter << endl << vecPipe[i].length << endl;
-			if (vecPipe[i].repair) 
-			{
-				fout << "broken" << endl;
-			}
-			else 
-			{
-				fout << "fixed" << endl;
-			}
+			fout << c;
 		}
-		for (int i = 0; i < vecCS.size(); i++) 
+		for (auto& c : vecCS) 
 		{
-			fout << endl << vecCS[i].id << endl << vecCS[i].name << endl << vecCS[i].shopsCount
-				<< endl << vecCS[i].workingShopsCount << endl << vecCS[i].efficiency << endl;
+			fout << c;
 		}
 	}
 	fout.close();
@@ -185,34 +212,18 @@ void LoadData(vector <Pipe>& vecPipe, vector <CompressorStation>& vecCS)
 	fin.open("data.txt", ios::in);
 	if (fin.is_open()) 
 	{
-		int a, b;
-		fin >> a;
-		fin >> b;
-		vecPipe.resize(a);
-		vecCS.resize(b);
-		for (int i = 0; i < vecPipe.size(); i++) 
+		int sizePipe, sizeCS;
+		fin >> sizePipe;
+		fin >> sizeCS;
+		vecPipe.resize(sizePipe);
+		vecCS.resize(sizeCS);
+		for (auto& c : vecPipe)
 		{
-			fin >> vecPipe[i].id;
-			fin >> vecPipe[i].diameter;
-			fin >> vecPipe[i].length;
-			string s;
-			fin >> s;
-			if (s == "broken") 
-			{
-				vecPipe[i].repair = true;
-			}
-			else 
-			{
-				vecPipe[i].repair = false;
-			}
+			fin >> c;
 		}
-		for (int i = 0; i < vecCS.size(); i++) 
+		for (auto& c : vecCS)
 		{
-			fin >> vecCS[i].id;
-			fin >> vecCS[i].name;
-			fin >> vecCS[i].shopsCount;
-			fin >> vecCS[i].workingShopsCount;
-			fin >> vecCS[i].efficiency;
+			fin >> c;
 		}
 		cout << "Data loaded" << endl;
 	}
@@ -220,9 +231,9 @@ void LoadData(vector <Pipe>& vecPipe, vector <CompressorStation>& vecCS)
 
 // проверка существоавния данного id и получение индекса элемента с этим id
 template <typename T>
-bool findId(const T& vec, int id, int& a) 
+bool findId(const vector <T>& vec, int id, int& a) 
 {
-	for (int i = 0; i < vec.size(); i++) 
+	for (int i = 0; i < vec.size(); i++ ) // оставил так, как из функции получаем иттератор
 	{
 		if (vec[i].id == id) 
 		{
@@ -234,11 +245,11 @@ bool findId(const T& vec, int id, int& a)
 }
 
 template <typename T>
-bool findId(const T& vec, int id)
+bool findId(const vector <T>& vec, int id)
 {
-	for (int i = 0; i < vec.size(); i++)
+	for (auto& c : vec)
 	{
-		if (vec[i].id == id)
+		if (c.id == id)
 		{
 			return true;
 		}
@@ -246,9 +257,24 @@ bool findId(const T& vec, int id)
 	return false;
 }
 
+template <typename T>
+// если есть id больше 1, то находит больше 1, если вектор пустой, то 0
+int findMaxId(const vector <T>& vec)
+{
+	int maxId = 0;
+	for (auto& c : vec)
+	{
+		if (c.id > maxId)
+		{
+			maxId = c.id;
+		}
+	}
+	return maxId;
+}
+
 // Удаление объектов
 template <typename T>
-void deleteObj(T& vec, int a) {
+void deleteObj(vector <T>& vec, int a) {
 	vec.erase(vec.begin() + a);// riptutorial.com/ru/cplusplus/example/2156/ удаление-элементов - удаляет выбранный элемент вектора и сдвигает все, что были справа
 }
 
@@ -353,20 +379,13 @@ int main()
 		{
 		case 1:
 			{
-				while (findId(vecPipe, idp)) 
-				{
-					idp++;
-				}
-				vecPipe.push_back(AddPipe(idp));
+				
+				vecPipe.push_back(AddPipe(findMaxId(vecPipe)+1));
 			}
 			break;
 		case 2:
 			{
-				while (findId(vecCS, idc)) 
-				{
-					idc++;
-				}
-				vecCS.push_back(AddCS(idc));
+				vecCS.push_back(AddCS(findMaxId(vecCS)+1));
 			}
 			break;
 		case 3:

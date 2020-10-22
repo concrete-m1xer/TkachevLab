@@ -47,7 +47,7 @@ ostream& operator << (ostream& out, const CompressorStation& CS)
 	out << "name: " << CS.name << endl;
 	out << "Shops (total): " << CS.shopsCount << endl;
 	out << "Shops (online): " << CS.workingShopsCount << endl;
-	out << "Efficieny (online/total): " << CS.efficiency << endl;
+	out << "Efficieny: " << CS.efficiency << endl;
 	out << endl;
 	return out;
 }
@@ -88,12 +88,17 @@ ofstream& operator << (ofstream& fout, const CompressorStation& CS)
 
 // Проверка правильности ввода  
 template <typename T>
-void tryInput( T& a, string alert) 
+T tryInput (string alert, T min, T max = 1000000) 
 {
+	T x;
+	cout << alert;
+	while ((cin >> x).fail() || x < min || x > max)
+	{
 		cin.clear();
 		cin.ignore(10000, '\n');
 		cout << alert;
-		cin >> a;
+	}
+	return x;
 }
 
 // Создание объектов (оставил как функцию, так как не смог передавать id как аргумент для потока)
@@ -101,14 +106,8 @@ Pipe AddPipe(int i)
 {
 	Pipe pipe;
 	pipe.id = i;
-	do 
-	{
-		tryInput(pipe.diameter ,"Type pipe's diametr: ");
-	} while (cin.fail() || pipe.diameter < 0);
-	do 
-	{
-		tryInput(pipe.length, "Type pipe's length: ");
-	} while (cin.fail() || pipe.length < 0);
+	pipe.diameter = tryInput("Type pipe's diametr: ", 0);
+	pipe.length= tryInput("Type pipe's length: ",0.0);
 	pipe.repair = false;
 	cout << endl;
 	return pipe;
@@ -120,18 +119,9 @@ CompressorStation AddCS(int j)
 	CS.id = j;
 	cout << "Type Compressor Station's name: "; 
 	cin >> CS.name; 
-	do 
-	{
-		tryInput(CS.shopsCount, "Type Compressor Station's count of shops: ");
-	} while (cin.fail() || CS.shopsCount < 0);
-	do 
-	{
-		tryInput(CS.workingShopsCount, "Type Compressor Station's count of working shops (less/equal than total!): ");
-	} while (cin.fail() || CS.workingShopsCount > CS.shopsCount || CS.workingShopsCount < 0);
-	do
-	{
-		tryInput(CS.efficiency, "Type Compressor Station's efficiency (0 - 1000): ");
-	} while (cin.fail() || CS.efficiency > 1000 || CS.efficiency < 0);
+	CS.shopsCount = tryInput("Type Compressor Station's count of shops: ", 0);
+	CS.workingShopsCount = tryInput("Type Compressor Station's count of working shops (less/equal than total!): ", 0, CS.shopsCount);
+	CS.efficiency = tryInput( "Type Compressor Station's efficiency (0 - 1000): ", 0, 1000);
 	cout << endl;
 	return CS;
 }
@@ -145,12 +135,9 @@ void EditPipe(Pipe& pipe)
 // Изменение компрессорной станции
 void EditCS(CompressorStation& CS) 
 {
-	int s;
-	do 
-	{
-		tryInput(s, "do you want run[1] or stop[0] or run/stop several[2] working shops? ");
-	} while (cin.fail());
-	switch (s)
+	int menu;
+	menu = tryInput("do you want run[1] or stop[0] or run/stop several[2] working shops? ", 0, 2);
+	switch (menu)
 	{
 	case 1:
 		if (CS.workingShopsCount < CS.shopsCount) 
@@ -173,10 +160,7 @@ void EditCS(CompressorStation& CS)
 		}
 		break;
 	case 2:
-		do 
-		{
-			tryInput(CS.workingShopsCount, "Enter number of shops you want to be online (less/equal than total!): ");
-		} while (cin.fail() || CS.workingShopsCount > CS.shopsCount || CS.workingShopsCount < 0);
+			CS.workingShopsCount = tryInput("Enter number of shops you want to be online (less/equal than total!) ", 0, CS.shopsCount);
 		break;
 	default:
 		cout << "This action unacceptable " << endl;
@@ -217,13 +201,13 @@ void LoadData(vector <Pipe>& vecPipe, vector <CompressorStation>& vecCS)
 		fin >> sizeCS;
 		vecPipe.resize(sizePipe);
 		vecCS.resize(sizeCS);
-		for (auto& c : vecPipe)
+		for (Pipe& p : vecPipe)
 		{
-			fin >> c;
+			fin >> p;
 		}
-		for (auto& c : vecCS)
+		for (CompressorStation& cs : vecCS)
 		{
-			fin >> c;
+			fin >> cs;
 		}
 		cout << "Data loaded" << endl;
 	}
@@ -231,30 +215,16 @@ void LoadData(vector <Pipe>& vecPipe, vector <CompressorStation>& vecCS)
 
 // проверка существоавния данного id и получение индекса элемента с этим id
 template <typename T>
-bool findId(const vector <T>& vec, int id, int& a) 
+int getIndexById(const vector <T>& vec, int id)
 {
-	for (int i = 0; i < vec.size(); i++ ) // оставил так, как из функции получаем иттератор
+	for (unsigned int i = 0; i < vec.size(); i++ ) // оставил так, как из функции получаем иттератор
 	{
 		if (vec[i].id == id) 
 		{
-			a = i;
-			return true;
+			return i;
 		}
 	}
-	return false;
-}
-
-template <typename T>
-bool findId(const vector <T>& vec, int id)
-{
-	for (auto& c : vec)
-	{
-		if (c.id == id)
-		{
-			return true;
-		}
-	}
-	return false;
+	return -1;
 }
 
 template <typename T>
@@ -274,8 +244,8 @@ int findMaxId(const vector <T>& vec)
 
 // Удаление объектов
 template <typename T>
-void deleteObj(vector <T>& vec, int a) {
-	vec.erase(vec.begin() + a);// riptutorial.com/ru/cplusplus/example/2156/ удаление-элементов - удаляет выбранный элемент вектора и сдвигает все, что были справа
+void deleteObj(vector <T>& vec, int i) {
+	vec.erase(vec.begin() + i);// riptutorial.com/ru/cplusplus/example/2156/ удаление-элементов - удаляет выбранный элемент вектора и сдвигает все, что были справа
 }
 
 // Вывод предупреждения о необходимости создать объекты
@@ -370,11 +340,7 @@ int main()
 	{
 		printMenu();
 		int menu;
-		cin >> menu;
-		while (cin.fail())
-		{
-			tryInput(menu, "");
-		}
+		menu = tryInput("", 0);
 		switch (menu)
 		{
 		case 1:
@@ -410,13 +376,17 @@ int main()
 		case 4:
 			if (vecPipe.size() != 0) 
 			{
-				int id, a;
-				do 
+				int id;
+				id = tryInput("Please, enter correct id of pipe you want to edit ", 1, findMaxId(vecPipe));
+				if (getIndexById(vecPipe, id) != -1)
 				{
-					tryInput(id, "Please, enter correct id of pipe you want to edit: ");
-				} while (cin.fail() || !findId(vecPipe, id, a));
-				EditPipe(vecPipe[a]);
-				cout << vecPipe[a];
+					EditPipe(vecPipe[getIndexById(vecPipe, id)]);
+					cout << vecPipe[getIndexById(vecPipe, id)];
+				}
+				else
+				{
+					cout << "This id does not exist" << endl;
+				}
 			}
 			else 
 			{
@@ -426,13 +396,17 @@ int main()
 		case 5: 
 			if (vecCS.size() != 0) 
 			{
-				int id, a;
-				do 
+				int id;
+				id = tryInput("Please, enter correct id of compressor station you want to edit ", 1, findMaxId(vecCS));
+				if (getIndexById(vecPipe, id) != -1)
 				{
-					tryInput(id , "Please, enter correct id of compressor station you want to edit: ");
-				} while (cin.fail() || !findId(vecCS, id, a));
-				cout << vecCS[a];
-				EditCS(vecCS[a]);
+					cout << vecCS[getIndexById(vecCS, id)];
+					EditCS(vecCS[getIndexById(vecCS, id)]);
+				}
+				else
+				{
+					cout << "This id does not exist" << endl;
+				}
 			}
 			else 
 			{
@@ -453,14 +427,18 @@ int main()
 			LoadData(vecPipe, vecCS);
 			break;
 		case 8: 
-			if (vecPipe.size() != 0) 
+			if (vecPipe.size() != 0)
 			{
-				int id, a;
-				do 
+				int id;
+				id = tryInput("Please, enter correct id of pipe you want to see ", 1, findMaxId(vecPipe));
+				if (getIndexById(vecPipe, id) != -1)
 				{
-					tryInput(id, "Please, enter correct id of pipe you want to see: ");
-				} while (cin.fail() || !findId(vecPipe, id, a));
-				cout << vecPipe[a];
+					cout << vecPipe[getIndexById(vecPipe, id)];
+				}
+				else
+				{
+					cout << "This id does not exist" << endl;
+				}
 			}
 			else 
 			{
@@ -470,12 +448,16 @@ int main()
 		case 9:
 			if (vecCS.size() != 0) 
 			{
-				int id, a;
-				do 
+				int id;
+				id = tryInput( "Please, enter correct id of compressor station you want to see: ", 1, findMaxId(vecCS));
+				if (getIndexById(vecCS, id) != -1)
 				{
-					tryInput(id, "Please, enter correct id of compressor station you want to see: ");
-				} while (cin.fail() || !findId(vecCS, id, a));
-				cout << vecCS[a];
+					cout << vecCS[getIndexById(vecCS, id)];
+				}
+				else
+				{
+					cout << "This id does not exist" << endl;
+				}
 			}
 			else 
 			{
@@ -485,12 +467,16 @@ int main()
 		case 10:
 			if (vecPipe.size() != 0) 
 			{
-				int id, a;
-				do 
+				int id;
+				id = tryInput("Enter correct id of pipe you want to delete, please ", 1, findMaxId(vecPipe));
+				if (getIndexById(vecPipe, id) != -1)
 				{
-					tryInput(id, "Enter correct id of pipe you want to delete, please: ");
-				} while (cin.fail() || !findId(vecPipe, id, a));
-				deleteObj(vecPipe, a);
+					deleteObj(vecPipe, getIndexById(vecPipe, id));
+				}
+				else
+				{
+					cout << "This id does not exist" << endl;
+				}
 			}
 			else 
 			{
@@ -500,12 +486,16 @@ int main()
 		case 11: 
 			if (vecCS.size() != 0) 
 			{
-				int id, a;
-				do 
+				int id;
+				id = tryInput("Enter correct id of conpressor station you want to delete, please: ", 1, findMaxId(vecCS));
+				if (getIndexById(vecCS, id) != -1)
 				{
-					tryInput(id, "Enter correct id of conpressor station you want to delete, please: ");
-				} while (cin.fail() || !findId(vecCS, id, a));
-				deleteObj(vecCS, a);
+					deleteObj(vecCS, getIndexById(vecCS, id));
+				}
+				else
+				{
+					cout << "This id does not exist" << endl;
+				}
 			}
 			else 
 			{

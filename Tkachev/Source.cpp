@@ -2,173 +2,14 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "CPipe.h"
+#include "CCompressorStation.h"
+#include "assistance.h"
+
 using namespace std;
 
-struct Pipe 
-{
-	int id;
-	int diameter;
-	double length;
-	bool repair;
-};
-
-struct CompressorStation 
-{
-	int id;
-	string name;
-	int shopsCount;
-	int workingShopsCount;
-	double efficiency;
-};
-
-// вывод на консоль через поток
-ostream& operator << (ostream& out, const Pipe& pipe)
-{
-	out << "It is the pipe's data" << endl;
-	out << "id: " << pipe.id << endl;
-	out << "diametr: " << pipe.diameter << endl;
-	out << "length: " << pipe.length << endl;
-	if (pipe.repair)
-	{
-		out << "The pipe needs repair" << endl;
-	}
-	else
-	{
-		out << "The pipe doesn't need repair" << endl;
-	}
-	out << endl;
-	return out;
-}
-
-ostream& operator << (ostream& out, const CompressorStation& CS)
-{
-	out << "It is the compressor station's data" << endl;
-	out << "id: " << CS.id << endl;
-	out << "name: " << CS.name << endl;
-	out << "Shops (total): " << CS.shopsCount << endl;
-	out << "Shops (online): " << CS.workingShopsCount << endl;
-	out << "Efficieny: " << CS.efficiency << endl;
-	out << endl;
-	return out;
-}
-
-// в файл
-ifstream& operator >> (ifstream& fin, Pipe& pipe)
-{
-	fin >> pipe.id;
-	fin >> pipe.diameter;
-	fin >> pipe.length;
-	fin >> pipe.repair;
-	return fin;
-}
-
-ofstream& operator << (ofstream& fout, const Pipe& pipe)
-{
-	fout << endl << pipe.id << endl << pipe.diameter << endl << pipe.length << endl << pipe.repair << endl;
-	return fout;
-}
-
-ifstream& operator >> (ifstream& fin, CompressorStation& CS)
-{
-	fin >> CS.id;
-	fin >> CS.name;
-	fin >> CS.shopsCount;
-	fin >> CS.workingShopsCount;
-	fin >> CS.efficiency;
-	return fin;
-}
-
-ofstream& operator << (ofstream& fout, const CompressorStation& CS)
-{
-	fout << endl << CS.id << endl << CS.name << endl << CS.shopsCount
-		<< endl << CS.workingShopsCount << endl << CS.efficiency << endl;
-	return fout;
-}
-
-
-// Проверка правильности ввода  
-template <typename T>
-T tryInput (string alert, T min, T max = 1000000) 
-{
-	T x;
-	cout << alert;
-	while ((cin >> x).fail() || x < min || x > max)
-	{
-		cin.clear();
-		cin.ignore(10000, '\n');
-		cout << alert;
-	}
-	return x;
-}
-
-// Создание объектов (оставил как функцию, так как не смог передавать id как аргумент для потока)
-Pipe AddPipe(int i) 
-{
-	Pipe pipe;
-	pipe.id = i;
-	pipe.diameter = tryInput("Type pipe's diametr: ", 0);
-	pipe.length= tryInput("Type pipe's length: ",0.0);
-	pipe.repair = false;
-	cout << endl;
-	return pipe;
-}
-
-CompressorStation AddCS(int j) 
-{
-	CompressorStation CS;
-	CS.id = j;
-	cout << "Type Compressor Station's name: "; 
-	cin >> CS.name; 
-	CS.shopsCount = tryInput("Type Compressor Station's count of shops: ", 0);
-	CS.workingShopsCount = tryInput("Type Compressor Station's count of working shops (less/equal than total!): ", 0, CS.shopsCount);
-	CS.efficiency = tryInput( "Type Compressor Station's efficiency (0 - 1000): ", 0, 1000);
-	cout << endl;
-	return CS;
-}
-
-// Изменение трубы
-void EditPipe(Pipe& pipe) 
-{
-	pipe.repair = !pipe.repair;
-}
-
-// Изменение компрессорной станции
-void EditCS(CompressorStation& CS) 
-{
-	int menu;
-	menu = tryInput("do you want run[1] or stop[0] or run/stop several[2] working shops? ", 0, 2);
-	switch (menu)
-	{
-	case 1:
-		if (CS.workingShopsCount < CS.shopsCount) 
-		{
-			++CS.workingShopsCount;
-		}
-		else 
-		{
-			cout << "can't get more working shops " << endl;
-		}
-		break;
-	case 0:
-		if (CS.workingShopsCount > 0) 
-		{
-			--CS.workingShopsCount;
-		}
-		else 
-		{
-			cout << "can't get less working shops " << endl;
-		}
-		break;
-	case 2:
-			CS.workingShopsCount = tryInput("Enter number of shops you want to be online (less/equal than total!) ", 0, CS.shopsCount);
-		break;
-	default:
-		cout << "This action unacceptable " << endl;
-	}
-}
-
 // Сохранение данных в файл
-void SaveData(const vector <Pipe>& vecPipe, const vector <CompressorStation>& vecCS) 
+void SaveData(const vector <CPipe>& vecPipe, const vector <CCompressorStation>& vecCS) 
 {
 	ofstream fout;
 	fout.open("data.txt", ios::out);
@@ -190,124 +31,19 @@ void SaveData(const vector <Pipe>& vecPipe, const vector <CompressorStation>& ve
 }
 
 // Загрузка данных из файла
-void LoadData(vector <Pipe>& vecPipe, vector <CompressorStation>& vecCS) 
+template <typename T>
+void LoadData(vector <T>& vec, int vecSize, ifstream& fin) 
 {
-	ifstream fin;
-	fin.open("data.txt", ios::in);
-	if (fin.is_open()) 
+	vec.resize(0); // исходя из того, что при загрузке откуда-либо удаляются все несохранённые данные 
+	vec.reserve(vecSize);
+	while(vecSize--)
 	{
-		int sizePipe, sizeCS;
-		fin >> sizePipe;
-		fin >> sizeCS;
-		vecPipe.resize(sizePipe);
-		vecCS.resize(sizeCS);
-		for (Pipe& p : vecPipe)
-		{
-			fin >> p;
-		}
-		for (CompressorStation& cs : vecCS)
-		{
-			fin >> cs;
-		}
-		cout << "Data loaded" << endl;
+		T c;
+		fin >> c;
+		vec.push_back(c);
+//		vec.push_back(CPipe(fin));
 	}
 }
-
-// проверка существоавния данного id и получение индекса элемента с этим id
-template <typename T>
-int getIndexById(const vector <T>& vec, int id)
-{
-	for (unsigned int i = 0; i < vec.size(); i++ ) // оставил так, как из функции получаем иттератор
-	{
-		if (vec[i].id == id) 
-		{
-			return i;
-		}
-	}
-	return -1;
-}
-
-template <typename T>
-// если есть id больше 1, то находит больше 1, если вектор пустой, то 0
-int findMaxId(const vector <T>& vec)
-{
-	int maxId = 0;
-	for (auto& c : vec)
-	{
-		if (c.id > maxId)
-		{
-			maxId = c.id;
-		}
-	}
-	return maxId;
-}
-
-// Удаление объектов
-template <typename T>
-void deleteObj(vector <T>& vec, int i) {
-	vec.erase(vec.begin() + i);// riptutorial.com/ru/cplusplus/example/2156/ удаление-элементов - удаляет выбранный элемент вектора и сдвигает все, что были справа
-}
-
-// Вывод предупреждения о необходимости создать объекты
-void notExist() {
-	cout << endl << "At first, add pipe or station \n" << endl;
-}
-
-// создание массива всех сломанных или рабочих труб (можно сразу вывод сделать, но так можно и изменять трубы пакетом)
-// vector <Pipe> getRepaired (const vector <Pipe>& vecPipe, bool workability)
-//{
-//	vector <Pipe> vecPipe1;
-//	if (workability)
-//	{
-//		for (int i = 0; i < vecPipe.size(); i++)
-//		{
-//			if (!vecPipe[i].repair)
-//			{
-//				vecPipe1.push_back(vecPipe[i]);
-//			}
-//		}
-//	}
-//	else
-//	{
-//		for (int i = 0; i < vecPipe.size(); i++)
-//		{
-//			if (vecPipe[i].repair)
-//			{
-//				vecPipe1.push_back(vecPipe[i]);
-//			}
-//		}
-//	}
-//	return vecPipe1; 
-//} 
-//
-//// создание массива кс отфильтрованных по эффективности
-// vector <CompressorStation> getEffective (const vector <CompressorStation>& vecCS, double efficiency, bool over)
-// {
-//	 vector <CompressorStation> vecCS1;
-//	 if (over)
-//	 {
-//		 for (int i = 0; i < vecCS.size(); i++)
-//		 {
-//			 if (vecCS[i].efficiency >= efficiency)
-//			 {
-//				 vecCS1.push_back(vecCS[i]);
-//			 }
-//		 }
-//	 }
-//	 else
-//	 {
-//		 for (int i = 0; i < vecCS.size(); i++)
-//		 {
-//			 if (vecCS[i].efficiency < efficiency)
-//			 {
-//				 vecCS1.push_back(vecCS[i]);
-//			 }
-//		 }
-//	 }
-//	 return vecCS1;
-// }
-
-// работа далее
 
  void printMenu()
  {
@@ -323,10 +59,15 @@ void notExist() {
 		 << "9 - View one compretion station \n"
 		 << "10 - Delete one pipe \n"
 		 << "11 - Delete one compretion station \n"
- //		 << "12 - View/Edit all working/broken pipes \n"
+		 << "12 - View/Edit all working/broken pipes \n"
  //		 << "13 - Sort compretion stations and show sorted \n"
 		 << "0 - Exit from Program" << endl;
  }
+
+ //поломок вроде не осталось
+ //как лучше резервировать
+ //стоит ли делать отдельную функцию для 
+
 
 int main() 
 {
@@ -334,8 +75,8 @@ int main()
 	int idp, idc;
 	idp = 1;
 	idc = 1;
-	vector <Pipe> vecPipe;
-	vector <CompressorStation> vecCS;
+	vector <CPipe> vecPipe;
+	vector <CCompressorStation> vecCS;
 	while (isRunning) 
 	{
 		printMenu();
@@ -345,31 +86,31 @@ int main()
 		{
 		case 1:
 			{
-				
-				vecPipe.push_back(AddPipe(findMaxId(vecPipe)+1));
+				vecPipe.push_back(CPipe(findMaxId(vecPipe)+1));
 			}
 			break;
 		case 2:
 			{
-				vecCS.push_back(AddCS(findMaxId(vecCS)+1));
+				vecCS.reserve(vecCS.capacity() + 1);
+				vecCS.push_back(CCompressorStation(findMaxId(vecCS)+1));
 			}
 			break;
 		case 3:
 			{
 				if (vecPipe.size() != 0 || vecCS.size() != 0)
 				{
-					for (Pipe& p : vecPipe)
+					for (CPipe& p : vecPipe)
 					{
 						cout << p;
 					}
-					for (CompressorStation& cs : vecCS)
+					for (CCompressorStation& cs : vecCS)
 					{
 						cout << cs;
 					}
 				}
 				else
 				{
-					notExist();
+					cout << endl << "At first, add pipe or station \n" << endl;
 				}
 			}
 			break;
@@ -377,10 +118,10 @@ int main()
 			if (vecPipe.size() != 0) 
 			{
 				int id;
-				id = tryInput("Please, enter correct id of pipe you want to edit ", 1, findMaxId(vecPipe));
+				id = tryInput("Please, enter correct id of pipe you want to edit: ", 1, findMaxId(vecPipe));
 				if (getIndexById(vecPipe, id) != -1)
 				{
-					EditPipe(vecPipe[getIndexById(vecPipe, id)]);
+					vecPipe[getIndexById(vecPipe, id)].editPipe();
 					cout << vecPipe[getIndexById(vecPipe, id)];
 				}
 				else
@@ -390,18 +131,18 @@ int main()
 			}
 			else 
 			{
-				notExist();
+				cout << endl << "At first, add pipe or station \n" << endl;
 			}
 			break;
 		case 5: 
 			if (vecCS.size() != 0) 
 			{
 				int id;
-				id = tryInput("Please, enter correct id of compressor station you want to edit ", 1, findMaxId(vecCS));
+				id = tryInput("Please, enter correct id of compressor station you want to edit: ", 1, findMaxId(vecCS));
 				if (getIndexById(vecPipe, id) != -1)
 				{
 					cout << vecCS[getIndexById(vecCS, id)];
-					EditCS(vecCS[getIndexById(vecCS, id)]);
+					vecCS[getIndexById(vecCS, id)].editCS();
 				}
 				else
 				{
@@ -410,7 +151,7 @@ int main()
 			}
 			else 
 			{
-				notExist();
+				cout << endl << "At first, add pipe or station \n" << endl;
 			}
 			break;
 		case 6:
@@ -420,17 +161,30 @@ int main()
 			}
 			else 
 			{
-				notExist();
+				cout << endl << "At first, add pipe or station \n" << endl;
 			}
 			break;
 		case 7:
-			LoadData(vecPipe, vecCS);
+			{
+				ifstream fin;
+				fin.open("data.txt", ios::in);
+				if (fin.is_open())
+				{
+					int sizePipe, sizeCS;
+					fin >> sizePipe;
+					fin >> sizeCS;
+					LoadData(vecPipe, sizePipe, fin);
+					LoadData(vecCS, sizeCS, fin);
+					cout << "Data successfully loaded " << endl;
+				}
+				fin.close();
+			}
 			break;
 		case 8: 
 			if (vecPipe.size() != 0)
 			{
 				int id;
-				id = tryInput("Please, enter correct id of pipe you want to see ", 1, findMaxId(vecPipe));
+				id = tryInput("Please, enter correct id of pipe you want to see: ", 1, findMaxId(vecPipe));
 				if (getIndexById(vecPipe, id) != -1)
 				{
 					cout << vecPipe[getIndexById(vecPipe, id)];
@@ -442,7 +196,7 @@ int main()
 			}
 			else 
 			{
-				notExist();
+				cout << endl << "At first, add pipe or station \n" << endl;
 			}
 			break;
 		case 9:
@@ -461,14 +215,14 @@ int main()
 			}
 			else 
 			{
-				notExist();
+				cout << endl << "At first, add pipe or station \n" << endl;
 			}
 			break;
 		case 10:
 			if (vecPipe.size() != 0) 
 			{
 				int id;
-				id = tryInput("Enter correct id of pipe you want to delete, please ", 1, findMaxId(vecPipe));
+				id = tryInput("Enter correct id of pipe you want to delete, please: ", 1, findMaxId(vecPipe));
 				if (getIndexById(vecPipe, id) != -1)
 				{
 					deleteObj(vecPipe, getIndexById(vecPipe, id));
@@ -480,7 +234,7 @@ int main()
 			}
 			else 
 			{
-				notExist();
+				cout << endl << "At first, add pipe or station \n" << endl;
 			}
 			break;
 		case 11: 
@@ -499,12 +253,43 @@ int main()
 			}
 			else 
 			{
-				notExist();
+				cout << endl << "At first, add pipe or station \n" << endl;
 			}
 			break;
-/*		case 12:
-
-			break;*/
+		case 12:
+			if (vecPipe.size() != 0)
+			{
+				int pick = tryInput("Would you like to see all broken[1] or all workable[2] pipes? ", 1, 2);
+				switch (pick)
+				{
+				case 1:
+					for (CPipe& p : vecPipe)
+					{
+						if (p.getRepair())
+						{
+							cout << p;
+						}
+					}
+					break;
+				case 2:
+					for (CPipe& p : vecPipe)
+					{
+						if (!p.getRepair())
+						{
+							cout << p;
+						}
+					}
+					break;
+				default:
+					cout << "This action is unacceptable" << endl;
+					break;
+				}
+			}
+			else
+			{
+				cout << endl << "At first, add pipe or station \n" << endl;
+			}
+				break;
 /*		case 13:
 
 			break;*/

@@ -12,7 +12,10 @@ using namespace std;
 void SaveData(const vector <CPipe>& vecPipe, const vector <CCompressorStation>& vecCS) 
 {
 	ofstream fout;
-	fout.open("data.txt", ios::out);
+	cout << "Enter filename, please: ";
+	string filename;
+	cin >> filename;
+	fout.open(filename+".txt", ios::out);
 	if (fout.is_open()) 
 	{
 		fout << vecPipe.size() << endl;
@@ -27,7 +30,7 @@ void SaveData(const vector <CPipe>& vecPipe, const vector <CCompressorStation>& 
 		}
 	}
 	fout.close();
-	cout << "Data saved " << endl;
+	cout << "Data saved \n" << endl;
 }
 
 // Загрузка данных из файла
@@ -45,9 +48,79 @@ void LoadData(vector <T>& vec, int vecSize, ifstream& fin)
 	}
 }
 
+ //как лучше резервировать
+
+template <typename T>
+ using filterPipe = bool(*) (const CPipe& p, T param);
+
+ bool checkRepair(const CPipe& p, bool workable)
+ {
+	 if (workable)
+	 {
+		 return !p.getRepair();
+	 } 
+	 else
+	 {
+		return p.getRepair();
+	 }
+ }
+
+ template <typename T>
+ vector <int> findAllPipeIndexByFilter(const vector <CPipe>& vec, filterPipe<T> f, T param)
+ {
+	 vector <int> res;
+	 res.reserve(vec.size());
+	 int i = 0;
+	 for (auto& elem : vec)
+	 {
+		 if (f(elem, param))
+		 {
+			 res.push_back(i);
+		 }
+		 i++;
+	 }
+	 return res;
+ }
+
+ template <typename T>
+ using filterCS = bool(*) (const CCompressorStation& cs, T param);
+
+ bool checkName(const CCompressorStation& cs, string name)
+ {
+	 return cs.getName() == name;
+ }
+
+ bool largerEfficiency(const CCompressorStation& cs, double efficiency)
+ {
+	 return cs.getEfficiency() >= efficiency;
+ }
+ 
+ bool smallerEfficiency(const CCompressorStation& cs, double efficiency)
+ {
+	 return cs.getEfficiency() < efficiency;
+ }
+
+ template <typename T>
+ vector <int> findAllCSIndexByFilter(const vector <CCompressorStation>& vec, filterCS<T> f, T param)
+ {
+	 vector <int> res;
+	 res.reserve(vec.size());
+	 int i = 0;
+	 for (auto& elem : vec)
+	 {
+		 if (f(elem, param))
+		 {
+			 res.push_back(i);
+		 }
+		 i++;
+	 }
+	 return res;
+ }
+
+
  void printMenu()
  {
-	cout << "Choose an action, please: \n"
+	 std::cout << "Choose an action, please: \n"
 		 << "1 - Add pipe \n"
 		 << "2 - Add compretion station \n"
 		 << "3 - View all objects \n"
@@ -59,22 +132,16 @@ void LoadData(vector <T>& vec, int vecSize, ifstream& fin)
 		 << "9 - View one compretion station \n"
 		 << "10 - Delete one pipe \n"
 		 << "11 - Delete one compretion station \n"
-		 << "12 - View/Edit all working/broken pipes \n"
- //		 << "13 - Sort compretion stations and show sorted \n"
-		 << "0 - Exit from Program" << endl;
+		 << "12 - Find required pipes \n"
+		 << "13 - Batch editing of pipes \n"
+		 << "14 - Find required compretion stations \n"
+		 << "15 - Batch editing of compretion stations \n"
+		 << "0 - Exit from Program" << std::endl;
  }
-
- //поломок вроде не осталось
- //как лучше резервировать
- //стоит ли делать отдельную функцию для 
-
 
 int main() 
 {
 	bool isRunning = true;
-	int idp, idc;
-	idp = 1;
-	idc = 1;
 	vector <CPipe> vecPipe;
 	vector <CCompressorStation> vecCS;
 	while (isRunning) 
@@ -86,13 +153,12 @@ int main()
 		{
 		case 1:
 			{
-				vecPipe.push_back(CPipe(findMaxId(vecPipe)+1));
+				vecPipe.push_back(CPipe(++CPipe::maxId));
 			}
 			break;
 		case 2:
 			{
-				vecCS.reserve(vecCS.capacity() + 1);
-				vecCS.push_back(CCompressorStation(findMaxId(vecCS)+1));
+				vecCS.push_back(CCompressorStation(++CCompressorStation::maxId));
 			}
 			break;
 		case 3:
@@ -151,7 +217,7 @@ int main()
 			}
 			else 
 			{
-				cout << endl << "At first, add pipe or station \n" << endl;
+				cout << endl << "At first, add station \n" << endl;
 			}
 			break;
 		case 6:
@@ -167,7 +233,10 @@ int main()
 		case 7:
 			{
 				ifstream fin;
-				fin.open("data.txt", ios::in);
+				cout << "Please, enter filename: ";
+				string filename;
+				cin >> filename;
+				fin.open(filename+".txt", ios::in);
 				if (fin.is_open())
 				{
 					int sizePipe, sizeCS;
@@ -175,9 +244,11 @@ int main()
 					fin >> sizeCS;
 					LoadData(vecPipe, sizePipe, fin);
 					LoadData(vecCS, sizeCS, fin);
-					cout << "Data successfully loaded " << endl;
+					cout << "Data successfully loaded \n " << endl;
 				}
 				fin.close();
+				CPipe::maxId = findMaxId(vecPipe);
+				CCompressorStation::maxId = findMaxId(vecCS);
 			}
 			break;
 		case 8: 
@@ -196,7 +267,7 @@ int main()
 			}
 			else 
 			{
-				cout << endl << "At first, add pipe or station \n" << endl;
+				cout << endl << "At first, add pipe \n" << endl;
 			}
 			break;
 		case 9:
@@ -215,7 +286,7 @@ int main()
 			}
 			else 
 			{
-				cout << endl << "At first, add pipe or station \n" << endl;
+				cout << endl << "At first, add station \n" << endl;
 			}
 			break;
 		case 10:
@@ -234,7 +305,7 @@ int main()
 			}
 			else 
 			{
-				cout << endl << "At first, add pipe or station \n" << endl;
+				cout << endl << "At first, add pipe \n" << endl;
 			}
 			break;
 		case 11: 
@@ -253,46 +324,227 @@ int main()
 			}
 			else 
 			{
-				cout << endl << "At first, add pipe or station \n" << endl;
+				cout << endl << "At first, add station \n" << endl;
 			}
 			break;
 		case 12:
 			if (vecPipe.size() != 0)
 			{
-				int pick = tryInput("Would you like to see all broken[1] or all workable[2] pipes? ", 1, 2);
-				switch (pick)
+				bool workable;
+				int a;
+				a = tryInput("You want to find all workable[1] or send for repair[0]? ", 0, 1);
+				a > 0 ? workable = true : workable = false;
+				for (int& i : findAllPipeIndexByFilter(vecPipe, checkRepair, workable))
 				{
+					cout << vecPipe[i];
+				}
+			}
+			else
+			{
+				cout << endl << "At first, add pipe \n" << endl;
+			}
+			break;
+		case 13:
+			if (vecPipe.size() != 0)
+			{
+				cout << "Choose correct action: \n"
+					 << "1 - Edit all broken pipes \n"
+					 << "2 - Edit all workable pipes \n"
+					 << "3 - Edit all pipes \n"
+					 << "4 - Edit several pipes with entered id \n"
+					 << "0 - Leave this menu "
+					 <<endl;
+				int sort = tryInput("", 0);
+				switch (sort)
+				{
+				case 0:
+					break;
 				case 1:
-					for (CPipe& p : vecPipe)
+					for (int& i : findAllPipeIndexByFilter(vecPipe, checkRepair, false))
 					{
-						if (p.getRepair())
-						{
-							cout << p;
-						}
+						vecPipe[i].editPipe();
+						cout << vecPipe[i];
 					}
 					break;
 				case 2:
-					for (CPipe& p : vecPipe)
+					for (int& i : findAllPipeIndexByFilter(vecPipe, checkRepair, true))
 					{
-						if (!p.getRepair())
-						{
-							cout << p;
-						}
+						vecPipe[i].editPipe();
+						cout << vecPipe[i];
 					}
 					break;
+				case 3:
+					for (CPipe& p : vecPipe)
+					{
+						p.editPipe();
+					}
+					break;
+				case 4:
+				{
+					vector <int> vecIndex;
+					bool input = true;
+					while (input)
+					{
+						int id = tryInput("Please, enter correct id of next pipe you want to edit or enter [0] to stop input: ", 0);
+						if (id != 0)
+						{
+							if (getIndexById(vecPipe, id) != -1)
+							{
+								vecIndex.push_back(getIndexById(vecPipe, id));
+							}
+							else
+							{
+								cout << "Could not find this id" << endl;
+							}
+						}
+						else
+						{
+							input = false;
+						}
+					}
+					for (int& i : vecIndex)
+					{
+						vecPipe[i].editPipe();
+						cout << vecPipe[i];
+					}
+				}
+					break;
 				default:
-					cout << "This action is unacceptable" << endl;
+					cout << "This action is unacceptable \n" << endl;
 					break;
 				}
 			}
 			else
 			{
-				cout << endl << "At first, add pipe or station \n" << endl;
+				cout << endl << "At first, add pipe \n" << endl;
 			}
+			break;
+		case 14:
+			if (vecCS.size() != 0)
+			{
+				int pick = tryInput("You want to find all compressor station by name[1] or by efficiency[0]? ", 0, 1);
+				if (pick > 0)
+				{
+					cout << "Please, enter name you want to find: ";
+					string name;
+					cin >> name;
+					for (int& i : findAllCSIndexByFilter(vecCS, checkName, name))
+					{
+						cout << vecCS[i];
+					}
+				}
+				else
+				{
+					double efficiency = tryInput("Please enter efficiency: ", 0, 1000);
+					int sort = tryInput("You want to filter compressor station with efficiency larger[1] or smaller[0] than entered : ", 0, 1);
+					if (sort > 0)
+					{
+						for (int& i : findAllCSIndexByFilter(vecCS, largerEfficiency, efficiency))
+						{
+							cout << vecCS[i];
+						}
+					}
+					else
+					{
+						for (int& i : findAllCSIndexByFilter(vecCS, smallerEfficiency, efficiency))
+						{
+							cout << vecCS[i];
+						}
+					}
+				}
+			}
+			else
+			{
+				cout << endl << "At first, add station \n" << endl;
+			}
+			break;
+		case 15:
+			if (vecCS.size() != 0)
+			{
+				cout << "Choose correct action: \n"
+					<< "1 - Edit compressor stations sorted by name \n"
+					<< "2 - Edit all compressor stations with efficiency larger than entered \n"
+					<< "3 - Edit all compressor stations with efficiency smaller than entered \n"
+					<< "4 - Edit several pipes with entered id \n"
+					<< "0 - Leave this menu "
+					<< endl;
+				int sort = tryInput("", 0);
+				switch (sort)
+				{
+				case 0:
+					break;
+				case 1:
+				{
+					cout << "Please, enter correct name of stations you want to edit: ";
+					string name;
+					cin >> name;
+					for (int& i : findAllCSIndexByFilter(vecCS, checkName, name))
+					{
+						cout << vecCS[i];
+						vecCS[i].editCS();
+					}
+				}
+					break;
+				case 2:
+				{
+					double efficiency = tryInput("Please, enter lower bound of efficiency: ", 0, 1000);
+					for (int& i : findAllCSIndexByFilter(vecCS, largerEfficiency, efficiency))
+					{
+						cout << vecCS[i];
+						vecCS[i].editCS();
+					}
+				}
+					break;
+				case 3:
+				{
+					double efficiency = tryInput("Please, enter upper bound of efficiency: ", 0, 1000);
+					for (int& i : findAllCSIndexByFilter(vecCS, smallerEfficiency, efficiency))
+					{
+						cout << vecCS[i];
+						vecCS[i].editCS();
+					}
+				}
+					break;
+				case 4:
+				{
+					vector <int> vecIndex;
+					bool input = true;
+					while (input)
+					{
+						int id = tryInput("Please, enter correct id of next pipe you want to edit or enter [0] to stop input: ", 0);
+						if (id != 0)
+						{
+							if (getIndexById(vecCS, id) != -1)
+							{
+								vecIndex.push_back(getIndexById(vecCS, id));
+							}
+							else
+							{
+								cout << "Could not find this id" << endl;
+							}
+						}
+						else
+						{
+							input = false;
+						}
+					}
+					for (int& i : vecIndex)
+					{
+						cout << vecCS[i];
+						vecCS[i].editCS();
+					}
+				}
 				break;
-/*		case 13:
-
-			break;*/
+				default:
+					cout << "This action is unacceptable \n" << endl;
+					break;
+				}
+			}
+			else
+			{
+				cout << endl << "At first, add station \n" << endl;
+			}
+			break;
 		case 0: 
 			isRunning = false;
 			break;

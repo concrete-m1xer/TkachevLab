@@ -11,9 +11,11 @@ class CPipe
 	bool repair;
 public:
 
+	static int maxId;
+
 	CPipe(int id);
 	CPipe();
-	CPipe(const CPipe& pipe);
+//	CPipe(const CPipe& pipe);
 //	CPipe(std::ifstream& in);
 
 	int getId() const;

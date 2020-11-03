@@ -1,8 +1,9 @@
 #include "CCompressorStation.h"
 
+int CCompressorStation::maxId = 0;
+
 CCompressorStation::CCompressorStation(int id)
 {
-	std::cout << "-------------------------CCompressorStation(int id)-------------------------------" << std::endl;
 	this->id = id;
 	std::cout << "Type Compressor Station's name: ";
 	std::cin >> this->name;
@@ -13,18 +14,16 @@ CCompressorStation::CCompressorStation(int id)
 
 CCompressorStation::CCompressorStation()
 {
-	std::cout << "-------------------------CCompressorStation()-------------------------------" << std::endl;
 }
 
-CCompressorStation::CCompressorStation(const CCompressorStation& cs)
-{
-	std::cout << "-------------------------CCompressorStation(const CCompressorStation& cs)-------------------------------" << std::endl;
-	id = cs.id;
-	name = cs.name;
-	shopsCount = cs.shopsCount;
-	workingShopsCount = cs.workingShopsCount;
-	efficiency = cs.efficiency;
-}
+//CCompressorStation::CCompressorStation(const CCompressorStation& cs)
+//{
+//	id = cs.id;
+//	name = cs.name;
+//	shopsCount = cs.shopsCount;
+//	workingShopsCount = cs.workingShopsCount;
+//	efficiency = cs.efficiency;
+//}
 
 int CCompressorStation::getId() const
 {

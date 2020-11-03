@@ -13,9 +13,11 @@ class CCompressorStation
 	double efficiency;
 public:
 
+	static int maxId;
+
 	CCompressorStation(int id);
 	CCompressorStation();
-	CCompressorStation(const CCompressorStation& cs);
+//	CCompressorStation(const CCompressorStation& cs);
 	//CCompressorStation(CCompressorStation&& cs);
 
 	int getId() const;

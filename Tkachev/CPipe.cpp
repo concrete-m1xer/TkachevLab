@@ -1,8 +1,9 @@
 #include "CPipe.h"
 
+int CPipe::maxId = 0;
+
 CPipe::CPipe(int id)
 {
-	std::cout << "------------------------CPipe(int id)----------------------------" << std::endl;
 	this->id = id;
 	this->diameter = tryInput("Type pipe's diametr: ", 0);
 	this->length = tryInput("Type pipe's length: ", 0.0);
@@ -11,22 +12,18 @@ CPipe::CPipe(int id)
 
 CPipe::CPipe()
 {
-	std::cout << "------------------------CPipe()----------------------------" << std::endl;
 }
 
-CPipe::CPipe(const CPipe& pipe)
-{
-	std::cout << "------------------------CPipe(const CPipe& pipe)----------------------------" << std::endl;
-	id = pipe.id;
-	diameter = pipe.diameter;
-	length = pipe.length;
-	repair = pipe.repair;
-}
+//CPipe::CPipe(const CPipe& pipe)
+//{
+//	id = pipe.id;
+//	diameter = pipe.diameter;
+//	length = pipe.length;
+//	repair = pipe.repair;
+//}
 
-// экспериментальный конструктор с потоком в качестве параметра. работает. интересно. ничего более.
 //CPipe::CPipe(std::ifstream& in)
 //{
-//	std::cout << "------------------------CPipe(std::ifstream& in)----------------------------" << std::endl;
 //	in >> this->id;
 //	in >> this->diameter;
 //	in >> this->length;
@@ -73,11 +70,6 @@ bool CPipe::getRepair() const
 //	repair = newRepair;
 //}
 
-void CPipe::editPipe()
-{
-	repair = !repair;
-}
-
 //в консоль
 std::ostream& operator << (std::ostream& out, const CPipe& pipe)
 {
@@ -111,4 +103,9 @@ std::ofstream& operator << (std::ofstream& fout, const CPipe& pipe)
 {
 	fout << std::endl << pipe.id << std::endl << pipe.diameter << std::endl << pipe.length << std::endl << pipe.repair << std::endl;
 	return fout;
+}
+
+void CPipe::editPipe()
+{
+	repair = !repair;
 }

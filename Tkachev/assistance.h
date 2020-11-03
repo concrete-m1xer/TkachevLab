@@ -3,8 +3,6 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include "CPipe.h"
-#include "CCompressorStation.h"
 
 template <typename T>
 T tryInput(std::string alert, T min, T max = 1000000)
@@ -23,7 +21,7 @@ T tryInput(std::string alert, T min, T max = 1000000)
 template <typename T>
 int getIndexById(const std::vector <T>& vec, int id)
 {
-	for (unsigned int i = 0; i < vec.size(); i++) // оставил так, как из функции получаем иттератор
+	for (unsigned int i = 0; i < vec.size(); i++) 
 	{
 		if (vec[i].getId() == id)
 		{

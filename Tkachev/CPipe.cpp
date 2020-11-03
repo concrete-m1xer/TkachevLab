@@ -22,13 +22,13 @@ CPipe::CPipe()
 //	repair = pipe.repair;
 //}
 
-//CPipe::CPipe(std::ifstream& in)
-//{
-//	in >> this->id;
-//	in >> this->diameter;
-//	in >> this->length;
-//	in >> this->repair;
-//}
+CPipe::CPipe(std::ifstream& in)
+{
+	in >> this->id;
+	in >> this->diameter;
+	in >> this->length;
+	in >> this->repair;
+}
 
 int CPipe::getId() const
 {

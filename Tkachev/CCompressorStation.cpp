@@ -16,6 +16,15 @@ CCompressorStation::CCompressorStation()
 {
 }
 
+CCompressorStation::CCompressorStation(std::ifstream& in)
+{
+	in >> this->id;
+	in >> this->name;
+	in >> this->shopsCount;
+	in >> this->workingShopsCount;
+	in >> this->efficiency;
+}
+
 //CCompressorStation::CCompressorStation(const CCompressorStation& cs)
 //{
 //	id = cs.id;

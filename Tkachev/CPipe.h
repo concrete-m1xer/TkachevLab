@@ -16,7 +16,7 @@ public:
 	CPipe(int id);
 	CPipe();
 //	CPipe(const CPipe& pipe);
-//	CPipe(std::ifstream& in);
+	CPipe(std::ifstream& in);
 
 	int getId() const;
 	int getDiameter() const;

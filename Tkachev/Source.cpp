@@ -28,9 +28,9 @@ void SaveData(const vector <CPipe>& vecPipe, const vector <CCompressorStation>& 
 		{
 			fout << c;
 		}
+	cout << "Data saved \n" << endl;
 	}
 	fout.close();
-	cout << "Data saved \n" << endl;
 }
 
 // Загрузка данных из файла
@@ -41,14 +41,12 @@ void LoadData(vector <T>& vec, int vecSize, ifstream& fin)
 	vec.reserve(vecSize);
 	while(vecSize--)
 	{
-		T c;
-		fin >> c;
-		vec.push_back(c);
-//		vec.push_back(CPipe(fin));
+		//T c;
+		//fin >> c;
+		//vec.push_back(c);
+		vec.push_back(T(fin));
 	}
 }
-
- //как лучше резервировать
 
 template <typename T>
  using filterPipe = bool(*) (const CPipe& p, T param);

@@ -151,12 +151,12 @@ int main()
 		{
 		case 1:
 			{
-				vecPipe.push_back(CPipe(++CPipe::maxId));
+				vecPipe.push_back(CPipe());
 			}
 			break;
 		case 2:
 			{
-				vecCS.push_back(CCompressorStation(++CCompressorStation::maxId));
+				vecCS.push_back(CCompressorStation());
 			}
 			break;
 		case 3:

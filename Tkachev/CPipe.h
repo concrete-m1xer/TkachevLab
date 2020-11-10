@@ -13,7 +13,6 @@ public:
 
 	static int maxId;
 
-	CPipe(int id);
 	CPipe();
 //	CPipe(const CPipe& pipe);
 	CPipe(std::ifstream& in);

@@ -2,17 +2,17 @@
 
 int CPipe::maxId = 0;
 
-CPipe::CPipe(int id)
+CPipe::CPipe()
 {
-	this->id = id;
+	this->id = ++maxId;
 	this->diameter = tryInput("Type pipe's diametr: ", 0);
 	this->length = tryInput("Type pipe's length: ", 0.0);
 	this->repair = false;
 }
 
-CPipe::CPipe()
-{
-}
+//CPipe::CPipe()
+//{
+//}
 
 //CPipe::CPipe(const CPipe& pipe)
 //{

@@ -15,7 +15,6 @@ public:
 
 	static int maxId;
 
-	CCompressorStation(int id);
 	CCompressorStation();
 	CCompressorStation(std::ifstream& in);
 //	CCompressorStation(const CCompressorStation& cs);

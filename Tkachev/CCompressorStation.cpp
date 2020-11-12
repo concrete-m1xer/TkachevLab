@@ -59,6 +59,11 @@ double CCompressorStation::getEfficiency() const
 	return efficiency;
 }
 
+double CCompressorStation::getOccupancyPercentage() const
+{
+	return workingShopsCount * (1.0 / shopsCount)*100;
+}
+
 //сетторы
 //void CCompressorStation::setId(int newId)
 //{
@@ -115,36 +120,30 @@ std::ifstream& operator >> (std::ifstream& fin, CCompressorStation& CS)
 	return fin;
 }
 
+std::istream& operator>>(std::istream& in, CCompressorStation& CS)
+{
+	CS.id = ++CCompressorStation::maxId;
+	in >> CS.name;
+	CS.shopsCount = tryInput("Please, enter count of shops: ", 1);
+	CS.workingShopsCount = tryInput("Please, enter count of online shops: ", 1);
+	CS.efficiency = tryInput("Please, enter efficiency: ", 1);
+	return in;
+}
+
 void CCompressorStation::editCS()
 {
-	int menu;
-	menu = tryInput("do you want run[1] or stop[0] or run/stop several[2] working shops? ", 0, 2);
-	switch (menu)
+	bool pick = tryInput<bool>("do you want run[1] or stop[0] working shops(0 - shops total)? ", 0, 1);
+	if (pick && workingShopsCount < shopsCount)
 	{
-	case 1:
-		if (workingShopsCount < shopsCount)
-		{
-			++workingShopsCount;
-		}
-		else
-		{
-			std::cout << "can't get more working shops " << std::endl;
-		}
-		break;
-	case 0:
-		if (workingShopsCount > 0)
-		{
-			--workingShopsCount;
-		}
-		else
-		{
-			std::cout << "can't get less working shops " << std::endl;
-		}
-		break;
-	case 2:
-		workingShopsCount = tryInput("Enter number of shops you want to be online (less/equal than total!) ", 0, shopsCount);
-		break;
-	default:
-		std::cout << "This action unacceptable " << std::endl;
+		++workingShopsCount;
+	}
+	if (!pick && workingShopsCount > 0)
+	{
+		--workingShopsCount;
 	}
 }
+
+//void CCompressorStation::enhancedEditCS()
+//{
+//	workingShopsCount = tryInput("Enter number of shops you want to be online (less/equal than total!) ", 0, shopsCount);
+//}

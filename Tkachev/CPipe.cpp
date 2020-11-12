@@ -105,6 +105,15 @@ std::ofstream& operator << (std::ofstream& fout, const CPipe& pipe)
 	return fout;
 }
 
+std::istream& operator>>(std::istream& in, CPipe& pipe)
+{
+	pipe.id = ++CPipe::maxId;
+	pipe.length = tryInput("Please, enter length: ", 1.0);
+	pipe.diameter = tryInput("Please, enter diameter: ", 1);
+	pipe.repair = false;
+	return in;
+}
+
 void CPipe::editPipe()
 {
 	repair = !repair;

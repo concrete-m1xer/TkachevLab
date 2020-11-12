@@ -32,5 +32,6 @@ public:
 	friend std::ostream& operator << (std::ostream& out, const CPipe& pipe);
 	friend std::ifstream& operator >> (std::ifstream& fin, CPipe& pipe);
 	friend std::ofstream& operator << (std::ofstream& fout, const CPipe& pipe);
+	friend std::istream& operator >> (std::istream& in, CPipe& pipe);
 };
 

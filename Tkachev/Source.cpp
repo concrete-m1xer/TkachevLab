@@ -48,65 +48,38 @@ void LoadData(vector <T>& vec, int vecSize, ifstream& fin)
 	}
 }
 
-template <typename T>
- using filterPipe = bool(*) (const CPipe& p, T param);
+template <typename C, typename T>
+ using filter = bool(*) (const C& p, T param, bool bParam);
 
- bool checkRepair(const CPipe& p, bool workable)
+ bool checkRepair(const CPipe& p, bool workable, bool bParam)
  {
-	 if (workable)
-	 {
-		 return !p.getRepair();
-	 } 
-	 else
-	 {
-		return p.getRepair();
-	 }
- }
-
- template <typename T>
- vector <int> findAllPipeIndexByFilter(const vector <CPipe>& vec, filterPipe<T> f, T param)
- {
-	 vector <int> res;
-	 res.reserve(vec.size());
-	 int i = 0;
-	 for (auto& elem : vec)
-	 {
-		 if (f(elem, param))
-		 {
-			 res.push_back(i);
-		 }
-		 i++;
-	 }
-	 return res;
- }
-
- template <typename T>
- using filterCS = bool(*) (const CCompressorStation& cs, T param);
-
- bool checkName(const CCompressorStation& cs, string name)
- {
-	 return cs.getName() == name;
- }
-
- bool largerEfficiency(const CCompressorStation& cs, double efficiency)
- {
-	 return cs.getEfficiency() >= efficiency;
+	 return (workable && !p.getRepair()) || (!workable && p.getRepair());
  }
  
- bool smallerEfficiency(const CCompressorStation& cs, double efficiency)
+ bool checkName(const CCompressorStation& cs, string name, bool bParam) // bParam если нужно вывести КС с именем отличным от введённого
  {
-	 return cs.getEfficiency() < efficiency;
+	 return cs.getName() == name && bParam || cs.getName() != name && !bParam;
  }
 
- template <typename T>
- vector <int> findAllCSIndexByFilter(const vector <CCompressorStation>& vec, filterCS<T> f, T param)
+ bool Efficiency(const CCompressorStation& cs, double efficiency, bool isMore)
+ {
+	 return cs.getEfficiency() >= efficiency && isMore || (cs.getEfficiency() < efficiency) && !isMore;
+ }
+
+ bool percentOfWorkingShops(const CCompressorStation& cs, double percent, bool isMore)
+ {
+	 return cs.getOccupancyPercentage() >= percent && isMore || (cs.getOccupancyPercentage() < percent) && !isMore;
+ }
+
+ template <typename C, typename T>
+ vector <int> findAllIndexByFilter(const vector <C>& vec, filter<C, T> f, T param, bool bParam = true)
  {
 	 vector <int> res;
 	 res.reserve(vec.size());
 	 int i = 0;
 	 for (auto& elem : vec)
 	 {
-		 if (f(elem, param))
+		 if (f(elem, param, bParam))
 		 {
 			 res.push_back(i);
 		 }
@@ -114,7 +87,6 @@ template <typename T>
 	 }
 	 return res;
  }
-
 
  void printMenu()
  {
@@ -328,11 +300,8 @@ int main()
 		case 12:
 			if (vecPipe.size() != 0)
 			{
-				bool workable;
-				int a;
-				a = tryInput("You want to find all workable[1] or send for repair[0]? ", 0, 1);
-				a > 0 ? workable = true : workable = false;
-				for (int& i : findAllPipeIndexByFilter(vecPipe, checkRepair, workable))
+				bool workable = tryInput<bool>("You want to find all workable[1] or send for repair[0]? ", 0, 1);
+				for (int& i : findAllIndexByFilter(vecPipe, checkRepair, workable))
 				{
 					cout << vecPipe[i];
 				}
@@ -358,14 +327,14 @@ int main()
 				case 0:
 					break;
 				case 1:
-					for (int& i : findAllPipeIndexByFilter(vecPipe, checkRepair, false))
+					for (int& i : findAllIndexByFilter(vecPipe, checkRepair, false))
 					{
 						vecPipe[i].editPipe();
 						cout << vecPipe[i];
 					}
 					break;
 				case 2:
-					for (int& i : findAllPipeIndexByFilter(vecPipe, checkRepair, true))
+					for (int& i : findAllIndexByFilter(vecPipe, checkRepair, true))
 					{
 						vecPipe[i].editPipe();
 						cout << vecPipe[i];
@@ -420,35 +389,43 @@ int main()
 		case 14:
 			if (vecCS.size() != 0)
 			{
-				int pick = tryInput("You want to find all compressor station by name[1] or by efficiency[0]? ", 0, 1);
-				if (pick > 0)
+				int pick = tryInput("You want to find all compressor station by name[0], by persentage of occupaton[1] or by efficiency[2]? ", 0, 2);
+				switch (pick)
 				{
-					cout << "Please, enter name you want to find: ";
-					string name;
-					cin >> name;
-					for (int& i : findAllCSIndexByFilter(vecCS, checkName, name))
+				case 0:
 					{
-						cout << vecCS[i];
-					}
-				}
-				else
-				{
-					double efficiency = tryInput("Please enter efficiency: ", 0, 1000);
-					int sort = tryInput("You want to filter compressor station with efficiency larger[1] or smaller[0] than entered : ", 0, 1);
-					if (sort > 0)
-					{
-						for (int& i : findAllCSIndexByFilter(vecCS, largerEfficiency, efficiency))
+						cout << "Please, enter name you want to find: ";
+						string name;
+						cin >> name;
+						for (int& i : findAllIndexByFilter(vecCS, checkName, name))
 						{
 							cout << vecCS[i];
 						}
 					}
-					else
+					break;
+				case 1:
 					{
-						for (int& i : findAllCSIndexByFilter(vecCS, smallerEfficiency, efficiency))
+						double percent = tryInput("Please, enter percentage of occupation: ", 0.0, 100.0);
+						bool sort = tryInput<bool>("You want to filter compressor stations with occupation percentage larger[1] or smaller[0] than entered : ", 0, 1);
+						for (int& i : findAllIndexByFilter(vecCS, percentOfWorkingShops, percent, sort))
 						{
 							cout << vecCS[i];
 						}
 					}
+					break;
+				case 2: 
+					{
+						double efficiency = tryInput("Please enter efficiency: ", 0.0, 1000.0);
+						bool sort = tryInput<bool>("You want to filter compressor stations with efficiency larger[1] or smaller[0] than entered : ", 0, 1);
+						for (int& i : findAllIndexByFilter(vecCS, Efficiency, efficiency, sort))
+						{
+							cout << vecCS[i];
+						}
+					}
+					break;
+				default:
+					cout << "This action unacceptable. " << endl;
+					break;
 				}
 			}
 			else
@@ -461,8 +438,8 @@ int main()
 			{
 				cout << "Choose correct action: \n"
 					<< "1 - Edit compressor stations sorted by name \n"
-					<< "2 - Edit all compressor stations with efficiency larger than entered \n"
-					<< "3 - Edit all compressor stations with efficiency smaller than entered \n"
+					<< "2 - Edit all compressor stations sorted by efficiency \n"
+					<< "3 - Edit all compressor stations sorted by percentage of occupation \n"
 					<< "4 - Edit several pipes with entered id \n"
 					<< "0 - Leave this menu "
 					<< endl;
@@ -476,7 +453,7 @@ int main()
 					cout << "Please, enter correct name of stations you want to edit: ";
 					string name;
 					cin >> name;
-					for (int& i : findAllCSIndexByFilter(vecCS, checkName, name))
+					for (int& i : findAllIndexByFilter(vecCS, checkName, name))
 					{
 						cout << vecCS[i];
 						vecCS[i].editCS();
@@ -485,8 +462,9 @@ int main()
 					break;
 				case 2:
 				{
-					double efficiency = tryInput("Please, enter lower bound of efficiency: ", 0, 1000);
-					for (int& i : findAllCSIndexByFilter(vecCS, largerEfficiency, efficiency))
+					double efficiency = tryInput("Please enter efficiency: ", 0.0, 1000.0);
+					bool sort = tryInput<bool>("You want to edit compressor stations with efficiency larger[1] or smaller[0] than entered : ", 0, 1);
+					for (int& i : findAllIndexByFilter(vecCS, Efficiency, efficiency, sort))
 					{
 						cout << vecCS[i];
 						vecCS[i].editCS();
@@ -495,8 +473,9 @@ int main()
 					break;
 				case 3:
 				{
-					double efficiency = tryInput("Please, enter upper bound of efficiency: ", 0, 1000);
-					for (int& i : findAllCSIndexByFilter(vecCS, smallerEfficiency, efficiency))
+					double percent = tryInput("Please, enter percentage of occupation: ", 0.0, 100.0);
+					bool sort = tryInput<bool>("You want to filter compressor stations with occupation percentage larger[1] or smaller[0] than entered : ", 0, 1);
+					for (int& i : findAllIndexByFilter(vecCS, percentOfWorkingShops, percent, sort))
 					{
 						cout << vecCS[i];
 						vecCS[i].editCS();

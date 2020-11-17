@@ -2,14 +2,18 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <map>
 #include "CPipe.h"
 #include "CCompressorStation.h"
 #include "assistance.h"
 
 using namespace std;
 
+// вс€ работа с словар€ми вз€та с сайтов: www.cyberforum.ru/cpp-beginners/thread1745799.html  
+//cppstudio.com/post/9535/      codelessons.ru/cplusplus/map-v-c-chto-eto-i-kak-s-etim-rabotat.html   www.cplusplus.com/reference/map/map/
+
 // —охранение данных в файл
-void SaveData(const vector <CPipe>& vecPipe, const vector <CCompressorStation>& vecCS) 
+void SaveData(const map <int, CPipe>& mapPipe, const map <int, CCompressorStation>& mapCS) 
 {
 	ofstream fout;
 	cout << "Enter filename, please: ";
@@ -18,15 +22,15 @@ void SaveData(const vector <CPipe>& vecPipe, const vector <CCompressorStation>& 
 	fout.open(filename+".txt", ios::out);
 	if (fout.is_open()) 
 	{
-		fout << vecPipe.size() << endl;
-		fout << vecCS.size() << endl;
-		for (auto& c : vecPipe)
+		fout << mapPipe.size() << endl;
+		fout << mapCS.size() << endl;
+		for (const auto& itp : mapPipe)
 		{
-			fout << c;
+			fout << itp.second;
 		}
-		for (auto& c : vecCS) 
+		for (const auto& itc : mapCS) 
 		{
-			fout << c;
+			fout << itc.second;
 		}
 	cout << "Data saved \n" << endl;
 	}
@@ -35,16 +39,22 @@ void SaveData(const vector <CPipe>& vecPipe, const vector <CCompressorStation>& 
 
 // «агрузка данных из файла
 template <typename T>
-void LoadData(vector <T>& vec, int vecSize, ifstream& fin) 
+void LoadData(map <int, T>& myMap, int mapSize, ifstream& fin) 
 {
-	vec.resize(0); // исход€ из того, что при загрузке откуда-либо удал€ютс€ все несохранЄнные данные 
-	vec.reserve(vecSize);
-	while(vecSize--)
+	vector <int> idVec;
+	idVec.reserve(myMap.size());
+	for (const auto& it : myMap)
 	{
-		//T c;
-		//fin >> c;
-		//vec.push_back(c);
-		vec.push_back(T(fin));
+		idVec.push_back(it.first);
+	} 
+	for (int i : idVec)
+	{
+		myMap.erase(i);
+	} // из логики того, что всЄ несохранЄнные данные удал€ютс€
+	while(mapSize--)
+	{
+		T val(fin);
+		myMap.insert(pair<int, T>(val.getId(), val));
 	}
 }
 
@@ -72,18 +82,16 @@ template <typename C, typename T>
  }
 
  template <typename C, typename T>
- vector <int> findAllIndexByFilter(const vector <C>& vec, filter<C, T> f, T param, bool bParam = true)
+ vector <int> findAllByFilter(const map <int, C>& myMap, filter<C, T> f, T param, bool bParam = true)
  {
 	 vector <int> res;
-	 res.reserve(vec.size());
-	 int i = 0;
-	 for (auto& elem : vec)
+	 res.reserve(myMap.size());
+	 for (const auto& p : myMap)
 	 {
-		 if (f(elem, param, bParam))
+		 if (f(p.second, param, bParam))
 		 {
-			 res.push_back(i);
+			 res.push_back(p.first);
 		 }
-		 i++;
 	 }
 	 return res;
  }
@@ -112,8 +120,8 @@ template <typename C, typename T>
 int main() 
 {
 	bool isRunning = true;
-	vector <CPipe> vecPipe;
-	vector <CCompressorStation> vecCS;
+	map <int, CPipe> mapPipe;
+	map <int, CCompressorStation> mapCS;
 	while (isRunning) 
 	{
 		printMenu();
@@ -123,25 +131,26 @@ int main()
 		{
 		case 1:
 			{
-				vecPipe.push_back(CPipe());
+				//mapPipe[CPipe::maxId+1] = CPipe();
+				mapPipe.insert(pair<int, CPipe>(CPipe::maxId + 1, CPipe()));
 			}
 			break;
 		case 2:
 			{
-				vecCS.push_back(CCompressorStation());
+				mapCS.insert(pair<int, CCompressorStation>(CCompressorStation::maxId + 1, CCompressorStation()));
 			}
 			break;
 		case 3:
 			{
-				if (vecPipe.size() != 0 || vecCS.size() != 0)
+				if (mapPipe.size() != 0 || mapCS.size() != 0)
 				{
-					for (CPipe& p : vecPipe)
+					for (const pair<const int, CPipe>& p : mapPipe)
 					{
-						cout << p;
+						cout << p.second;
 					}
-					for (CCompressorStation& cs : vecCS)
+					for (const pair<const int, CCompressorStation>& p : mapCS)
 					{
-						cout << cs;
+						cout << p.second;
 					}
 				}
 				else
@@ -151,14 +160,13 @@ int main()
 			}
 			break;
 		case 4:
-			if (vecPipe.size() != 0) 
+			if (mapPipe.size() != 0) 
 			{
-				int id;
-				id = tryInput("Please, enter correct id of pipe you want to edit: ", 1, findMaxId(vecPipe));
-				if (getIndexById(vecPipe, id) != -1)
+				int id = tryInput("Please, enter correct id of pipe you want to edit: ", 1, findMaxId(mapPipe));
+				if (mapPipe.find(id) != mapPipe.end())
 				{
-					vecPipe[getIndexById(vecPipe, id)].editPipe();
-					cout << vecPipe[getIndexById(vecPipe, id)];
+					mapPipe[id].editPipe();
+					cout << mapPipe[id];
 				}
 				else
 				{
@@ -171,14 +179,14 @@ int main()
 			}
 			break;
 		case 5: 
-			if (vecCS.size() != 0) 
+			if (mapCS.size() != 0) 
 			{
 				int id;
-				id = tryInput("Please, enter correct id of compressor station you want to edit: ", 1, findMaxId(vecCS));
-				if (getIndexById(vecPipe, id) != -1)
+				id = tryInput("Please, enter correct id of compressor station you want to edit: ", 1, findMaxId(mapCS));
+				if (mapCS.find(id) != mapCS.end())
 				{
-					cout << vecCS[getIndexById(vecCS, id)];
-					vecCS[getIndexById(vecCS, id)].editCS();
+					cout << mapCS[id];
+					mapCS[id].editCS();
 				}
 				else
 				{
@@ -191,9 +199,9 @@ int main()
 			}
 			break;
 		case 6:
-			if (vecPipe.size() != 0 || vecCS.size() != 0) 
+			if (mapPipe.size() != 0 || mapCS.size() != 0) 
 			{
-				SaveData(vecPipe, vecCS);
+				SaveData(mapPipe, mapCS);
 			}
 			else 
 			{
@@ -212,23 +220,22 @@ int main()
 					int sizePipe, sizeCS;
 					fin >> sizePipe;
 					fin >> sizeCS;
-					LoadData(vecPipe, sizePipe, fin);
-					LoadData(vecCS, sizeCS, fin);
+					LoadData(mapPipe, sizePipe, fin);
+					LoadData(mapCS, sizeCS, fin);
 					cout << "Data successfully loaded \n " << endl;
 				}
 				fin.close();
-				CPipe::maxId = findMaxId(vecPipe);
-				CCompressorStation::maxId = findMaxId(vecCS);
+				CPipe::maxId = findMaxId(mapPipe);
+				CCompressorStation::maxId = findMaxId(mapCS);
 			}
 			break;
 		case 8: 
-			if (vecPipe.size() != 0)
+			if (mapPipe.size() != 0)
 			{
-				int id;
-				id = tryInput("Please, enter correct id of pipe you want to see: ", 1, findMaxId(vecPipe));
-				if (getIndexById(vecPipe, id) != -1)
+				int id = tryInput("Please, enter correct id of pipe you want to see: ", 1, findMaxId(mapPipe));
+				if (mapPipe.find(id) != mapPipe.end())
 				{
-					cout << vecPipe[getIndexById(vecPipe, id)];
+					cout << mapPipe[id];
 				}
 				else
 				{
@@ -241,13 +248,13 @@ int main()
 			}
 			break;
 		case 9:
-			if (vecCS.size() != 0) 
+			if (mapCS.size() != 0) 
 			{
 				int id;
-				id = tryInput( "Please, enter correct id of compressor station you want to see: ", 1, findMaxId(vecCS));
-				if (getIndexById(vecCS, id) != -1)
+				id = tryInput( "Please, enter correct id of compressor station you want to see: ", 1, findMaxId(mapCS));
+				if (mapCS.find(id) != mapCS.end())
 				{
-					cout << vecCS[getIndexById(vecCS, id)];
+					cout << mapCS[id];
 				}
 				else
 				{
@@ -260,13 +267,12 @@ int main()
 			}
 			break;
 		case 10:
-			if (vecPipe.size() != 0) 
+			if (mapPipe.size() != 0) 
 			{
-				int id;
-				id = tryInput("Enter correct id of pipe you want to delete, please: ", 1, findMaxId(vecPipe));
-				if (getIndexById(vecPipe, id) != -1)
+				int id = tryInput("Enter correct id of pipe you want to delete, please: ", 1, findMaxId(mapPipe));
+				if (mapPipe.find(id) != mapPipe.end())
 				{
-					deleteObj(vecPipe, getIndexById(vecPipe, id));
+					deleteObj(mapPipe, id);
 				}
 				else
 				{
@@ -279,13 +285,12 @@ int main()
 			}
 			break;
 		case 11: 
-			if (vecCS.size() != 0) 
+			if (mapCS.size() != 0) 
 			{
-				int id;
-				id = tryInput("Enter correct id of conpressor station you want to delete, please: ", 1, findMaxId(vecCS));
-				if (getIndexById(vecCS, id) != -1)
+				int id = tryInput("Enter correct id of conpressor station you want to delete, please: ", 1, findMaxId(mapCS));
+				if (mapCS.find(id) != mapCS.end())
 				{
-					deleteObj(vecCS, getIndexById(vecCS, id));
+					deleteObj(mapCS, id);
 				}
 				else
 				{
@@ -298,12 +303,12 @@ int main()
 			}
 			break;
 		case 12:
-			if (vecPipe.size() != 0)
+			if (mapPipe.size() != 0)
 			{
 				bool workable = tryInput<bool>("You want to find all workable[1] or send for repair[0]? ", 0, 1);
-				for (int& i : findAllIndexByFilter(vecPipe, checkRepair, workable))
+				for (int& i : findAllByFilter(mapPipe, checkRepair, workable))
 				{
-					cout << vecPipe[i];
+					cout << mapPipe[i];
 				}
 			}
 			else
@@ -312,7 +317,7 @@ int main()
 			}
 			break;
 		case 13:
-			if (vecPipe.size() != 0)
+			if (mapPipe.size() != 0)
 			{
 				cout << "Choose correct action: \n"
 					 << "1 - Edit all broken pipes \n"
@@ -327,37 +332,37 @@ int main()
 				case 0:
 					break;
 				case 1:
-					for (int& i : findAllIndexByFilter(vecPipe, checkRepair, false))
+					for (int& i : findAllByFilter(mapPipe, checkRepair, false))
 					{
-						vecPipe[i].editPipe();
-						cout << vecPipe[i];
+						mapPipe[i].editPipe();
+						cout << mapPipe[i];
 					}
 					break;
 				case 2:
-					for (int& i : findAllIndexByFilter(vecPipe, checkRepair, true))
+					for (int& i : findAllByFilter(mapPipe, checkRepair, true))
 					{
-						vecPipe[i].editPipe();
-						cout << vecPipe[i];
+						mapPipe[i].editPipe();
+						cout << mapPipe[i];
 					}
 					break;
 				case 3:
-					for (CPipe& p : vecPipe)
+					for (pair<const int, CPipe>& p : mapPipe)
 					{
-						p.editPipe();
+						p.second.editPipe();
 					}
 					break;
 				case 4:
 				{
-					vector <int> vecIndex;
+					vector <int> vecId;
 					bool input = true;
 					while (input)
 					{
 						int id = tryInput("Please, enter correct id of next pipe you want to edit or enter [0] to stop input: ", 0);
 						if (id != 0)
 						{
-							if (getIndexById(vecPipe, id) != -1)
+							if (mapPipe.find(id) != mapPipe.end())
 							{
-								vecIndex.push_back(getIndexById(vecPipe, id));
+								vecId.push_back(id);
 							}
 							else
 							{
@@ -369,10 +374,10 @@ int main()
 							input = false;
 						}
 					}
-					for (int& i : vecIndex)
+					for (int& i : vecId)
 					{
-						vecPipe[i].editPipe();
-						cout << vecPipe[i];
+						mapPipe[i].editPipe();
+						cout << mapPipe[i];
 					}
 				}
 					break;
@@ -387,7 +392,7 @@ int main()
 			}
 			break;
 		case 14:
-			if (vecCS.size() != 0)
+			if (mapCS.size() != 0)
 			{
 				int pick = tryInput("You want to find all compressor station by name[0], by persentage of occupaton[1] or by efficiency[2]? ", 0, 2);
 				switch (pick)
@@ -397,9 +402,9 @@ int main()
 						cout << "Please, enter name you want to find: ";
 						string name;
 						cin >> name;
-						for (int& i : findAllIndexByFilter(vecCS, checkName, name))
+						for (int& i : findAllByFilter(mapCS, checkName, name))
 						{
-							cout << vecCS[i];
+							cout << mapCS[i];
 						}
 					}
 					break;
@@ -407,9 +412,9 @@ int main()
 					{
 						double percent = tryInput("Please, enter percentage of occupation: ", 0.0, 100.0);
 						bool sort = tryInput<bool>("You want to filter compressor stations with occupation percentage larger[1] or smaller[0] than entered : ", 0, 1);
-						for (int& i : findAllIndexByFilter(vecCS, percentOfWorkingShops, percent, sort))
+						for (int& i : findAllByFilter(mapCS, percentOfWorkingShops, percent, sort))
 						{
-							cout << vecCS[i];
+							cout << mapCS[i];
 						}
 					}
 					break;
@@ -417,9 +422,9 @@ int main()
 					{
 						double efficiency = tryInput("Please enter efficiency: ", 0.0, 1000.0);
 						bool sort = tryInput<bool>("You want to filter compressor stations with efficiency larger[1] or smaller[0] than entered : ", 0, 1);
-						for (int& i : findAllIndexByFilter(vecCS, Efficiency, efficiency, sort))
+						for (int& i : findAllByFilter(mapCS, Efficiency, efficiency, sort))
 						{
-							cout << vecCS[i];
+							cout << mapCS[i];
 						}
 					}
 					break;
@@ -434,7 +439,7 @@ int main()
 			}
 			break;
 		case 15:
-			if (vecCS.size() != 0)
+			if (mapCS.size() != 0)
 			{
 				cout << "Choose correct action: \n"
 					<< "1 - Edit compressor stations sorted by name \n"
@@ -453,10 +458,10 @@ int main()
 					cout << "Please, enter correct name of stations you want to edit: ";
 					string name;
 					cin >> name;
-					for (int& i : findAllIndexByFilter(vecCS, checkName, name))
+					for (int& i : findAllByFilter(mapCS, checkName, name))
 					{
-						cout << vecCS[i];
-						vecCS[i].editCS();
+						cout << mapCS[i];
+						mapCS[i].editCS();
 					}
 				}
 					break;
@@ -464,10 +469,10 @@ int main()
 				{
 					double efficiency = tryInput("Please enter efficiency: ", 0.0, 1000.0);
 					bool sort = tryInput<bool>("You want to edit compressor stations with efficiency larger[1] or smaller[0] than entered : ", 0, 1);
-					for (int& i : findAllIndexByFilter(vecCS, Efficiency, efficiency, sort))
+					for (int& i : findAllByFilter(mapCS, Efficiency, efficiency, sort))
 					{
-						cout << vecCS[i];
-						vecCS[i].editCS();
+						cout << mapCS[i];
+						mapCS[i].editCS();
 					}
 				}
 					break;
@@ -475,25 +480,25 @@ int main()
 				{
 					double percent = tryInput("Please, enter percentage of occupation: ", 0.0, 100.0);
 					bool sort = tryInput<bool>("You want to filter compressor stations with occupation percentage larger[1] or smaller[0] than entered : ", 0, 1);
-					for (int& i : findAllIndexByFilter(vecCS, percentOfWorkingShops, percent, sort))
+					for (int& i : findAllByFilter(mapCS, percentOfWorkingShops, percent, sort))
 					{
-						cout << vecCS[i];
-						vecCS[i].editCS();
+						cout << mapCS[i];
+						mapCS[i].editCS();
 					}
 				}
 					break;
 				case 4:
 				{
-					vector <int> vecIndex;
+					vector <int> vecId;
 					bool input = true;
 					while (input)
 					{
 						int id = tryInput("Please, enter correct id of next pipe you want to edit or enter [0] to stop input: ", 0);
 						if (id != 0)
 						{
-							if (getIndexById(vecCS, id) != -1)
+							if (mapCS.find(id) != mapCS.end())
 							{
-								vecIndex.push_back(getIndexById(vecCS, id));
+								vecId.push_back(id);
 							}
 							else
 							{
@@ -505,10 +510,10 @@ int main()
 							input = false;
 						}
 					}
-					for (int& i : vecIndex)
+					for (int& i : vecId)
 					{
-						cout << vecCS[i];
-						vecCS[i].editCS();
+						cout << mapCS[i];
+						mapCS[i].editCS();
 					}
 				}
 				break;

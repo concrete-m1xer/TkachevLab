@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <map>
 #include <vector>
 
 template <typename T>
@@ -33,14 +34,14 @@ int getIndexById(const std::vector <T>& vec, int id)
 
 template <typename T>
 // если есть id больше 1, то находит больше 1, если вектор пустой, то 0
-int findMaxId(const std::vector <T>& vec)
+int findMaxId(const std::map <int, T>& myMap)
 {
 	int maxId = 0;
-	for (auto& c : vec)
+	for (const auto& p : myMap)
 	{
-		if (c.getId() > maxId)
+		if (p.second.getId() > maxId)
 		{
-			maxId = c.getId();
+			maxId = p.second.getId();
 		}
 	}
 	return maxId;
@@ -48,6 +49,6 @@ int findMaxId(const std::vector <T>& vec)
 
 // Удаление объектов
 template <typename T>
-void deleteObj(std::vector <T>& vec, int i) {
-	vec.erase(vec.begin() + i);// riptutorial.com/ru/cplusplus/example/2156/ удаление-элементов - удаляет выбранный элемент вектора и сдвигает все, что были справа
+void deleteObj(std::map <int, T>& myMap, int id) {
+	myMap.erase(id);
 }

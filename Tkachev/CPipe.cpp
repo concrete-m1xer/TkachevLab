@@ -14,13 +14,13 @@ CPipe::CPipe()
 //{
 //}
 
-//CPipe::CPipe(const CPipe& pipe)
-//{
-//	id = pipe.id;
-//	diameter = pipe.diameter;
-//	length = pipe.length;
-//	repair = pipe.repair;
-//}
+CPipe::CPipe(const CPipe& pipe)
+{
+	id = pipe.id;
+	diameter = pipe.diameter;
+	length = pipe.length;
+	repair = pipe.repair;
+}
 
 CPipe::CPipe(std::ifstream& in)
 {

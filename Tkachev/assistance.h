@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 template <typename T>
@@ -20,21 +20,8 @@ T tryInput(std::string alert, T min, T max = 1000000)
 }
 
 template <typename T>
-int getIndexById(const std::vector <T>& vec, int id)
-{
-	for (unsigned int i = 0; i < vec.size(); i++) 
-	{
-		if (vec[i].getId() == id)
-		{
-			return i;
-		}
-	}
-	return -1;
-}
-
-template <typename T>
 // если есть id больше 1, то находит больше 1, если вектор пустой, то 0
-int findMaxId(const std::map <int, T>& myMap)
+int findMaxId(const std::unordered_map <int, T>& myMap)
 {
 	int maxId = 0;
 	for (const auto& p : myMap)
@@ -49,6 +36,29 @@ int findMaxId(const std::map <int, T>& myMap)
 
 // Удаление объектов
 template <typename T>
-void deleteObj(std::map <int, T>& myMap, int id) {
+void deleteObj(std::unordered_map <int, T>& myMap, int id) {
 	myMap.erase(id);
+}
+
+template <typename T>
+std::vector <int> inputVecId(std::unordered_map <int, T> myMap)
+{
+	std::vector <int> vecId;
+	bool input = true;
+	while (input)
+	{
+		int id = tryInput("Please, enter correct id of next pipe you want to edit or enter [0] to stop input: ", 0);
+		if (id != 0)
+		{
+			if (myMap.find(id) != myMap.end())
+			{
+				vecId.push_back(id);
+			}
+		}
+		else
+		{
+			input = false;
+		}
+	}
+	return vecId;
 }

@@ -14,7 +14,7 @@ public:
 	static int maxId;
 
 	CPipe();
-	CPipe(const CPipe& pipe);
+	//CPipe(const CPipe& pipe);
 	CPipe(std::ifstream& in);
 
 	int getId() const;

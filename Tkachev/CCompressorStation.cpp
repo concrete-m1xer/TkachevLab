@@ -6,7 +6,8 @@ CCompressorStation::CCompressorStation()
 {
 	this->id = ++maxId;
 	std::cout << "Type Compressor Station's name: ";
-	std::cin >> this->name;
+	std::cin.ignore();
+	std::getline(std::cin, this->name);
 	this->shopsCount = tryInput("Type Compressor Station's count of shops: ", 0);
 	this->workingShopsCount = tryInput("Type Compressor Station's count of working shops (less/equal than total!): ", 0, shopsCount);
 	this->efficiency = tryInput("Type Compressor Station's efficiency (0 - 1000): ", 0, 1000);
@@ -19,7 +20,8 @@ CCompressorStation::CCompressorStation()
 CCompressorStation::CCompressorStation(std::ifstream& in)
 {
 	in >> this->id;
-	in >> this->name;
+	in.ignore();
+	getline(in, this->name);
 	in >> this->shopsCount;
 	in >> this->workingShopsCount;
 	in >> this->efficiency;

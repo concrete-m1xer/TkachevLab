@@ -2,7 +2,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include "CPipe.h"
 #include "CCompressorStation.h"
 #include "assistance.h"
@@ -13,7 +13,7 @@ using namespace std;
 //cppstudio.com/post/9535/      codelessons.ru/cplusplus/map-v-c-chto-eto-i-kak-s-etim-rabotat.html   www.cplusplus.com/reference/map/map/
 
 // Сохранение данных в файл
-void SaveData(const map <int, CPipe>& mapPipe, const map <int, CCompressorStation>& mapCS) 
+void SaveData(const unordered_map <int, CPipe>& mapPipe, const unordered_map <int, CCompressorStation>& mapCS)
 {
 	ofstream fout;
 	cout << "Enter filename, please: ";
@@ -39,7 +39,7 @@ void SaveData(const map <int, CPipe>& mapPipe, const map <int, CCompressorStatio
 
 // Загрузка данных из файла
 template <typename T>
-void LoadData(map <int, T>& myMap, int mapSize, ifstream& fin) 
+void LoadData(unordered_map <int, T>& myMap, int mapSize, ifstream& fin)
 {
 	vector <int> idVec;
 	idVec.reserve(myMap.size());
@@ -61,7 +61,7 @@ void LoadData(map <int, T>& myMap, int mapSize, ifstream& fin)
 template <typename C, typename T>
  using filter = bool(*) (const C& p, T param, bool bParam);
 
- bool checkRepair(const CPipe& p, bool workable, bool bParam)
+ bool checkRepair(const CPipe& p, bool workable, bool bParam = true)
  {
 	 return (workable && !p.getRepair()) || (!workable && p.getRepair());
  }
@@ -82,7 +82,7 @@ template <typename C, typename T>
  }
 
  template <typename C, typename T>
- vector <int> findAllByFilter(const map <int, C>& myMap, filter<C, T> f, T param, bool bParam = true)
+ vector <int> findAllByFilter(const unordered_map <int, C>& myMap, filter<C, T> f, T param, bool bParam = true)
  {
 	 vector <int> res;
 	 res.reserve(myMap.size());
@@ -120,8 +120,8 @@ template <typename C, typename T>
 int main() 
 {
 	bool isRunning = true;
-	map <int, CPipe> mapPipe;
-	map <int, CCompressorStation> mapCS;
+	unordered_map <int, CPipe> mapPipe;
+	unordered_map <int, CCompressorStation> mapCS;
 	while (isRunning) 
 	{
 		printMenu();
@@ -163,10 +163,11 @@ int main()
 			if (mapPipe.size() != 0) 
 			{
 				int id = tryInput("Please, enter correct id of pipe you want to edit: ", 1, findMaxId(mapPipe));
-				if (mapPipe.find(id) != mapPipe.end())
+				unordered_map<int, CPipe>::iterator it = mapPipe.find(id);
+				if (it != mapPipe.end())
 				{
-					mapPipe[id].editPipe();
-					cout << mapPipe[id];
+					it->second.editPipe();
+					cout << it->second;
 				}
 				else
 				{
@@ -181,12 +182,12 @@ int main()
 		case 5: 
 			if (mapCS.size() != 0) 
 			{
-				int id;
-				id = tryInput("Please, enter correct id of compressor station you want to edit: ", 1, findMaxId(mapCS));
-				if (mapCS.find(id) != mapCS.end())
+				int id = tryInput("Please, enter correct id of compressor station you want to edit: ", 1, findMaxId(mapCS));
+				unordered_map <int, CCompressorStation>::iterator it = mapCS.find(id);
+				if (it != mapCS.end())
 				{
-					cout << mapCS[id];
-					mapCS[id].editCS();
+					cout << it->second;
+					it->second.editCS();
 				}
 				else
 				{
@@ -233,9 +234,10 @@ int main()
 			if (mapPipe.size() != 0)
 			{
 				int id = tryInput("Please, enter correct id of pipe you want to see: ", 1, findMaxId(mapPipe));
-				if (mapPipe.find(id) != mapPipe.end())
+				unordered_map <int, CPipe>::iterator it = mapPipe.find(id);
+				if (it != mapPipe.end())
 				{
-					cout << mapPipe[id];
+					cout << it->second;
 				}
 				else
 				{
@@ -252,9 +254,10 @@ int main()
 			{
 				int id;
 				id = tryInput( "Please, enter correct id of compressor station you want to see: ", 1, findMaxId(mapCS));
-				if (mapCS.find(id) != mapCS.end())
+				unordered_map <int, CCompressorStation>::iterator it = mapCS.find(id);
+				if (it != mapCS.end())
 				{
-					cout << mapCS[id];
+					cout << it->second;
 				}
 				else
 				{
@@ -353,27 +356,7 @@ int main()
 					break;
 				case 4:
 				{
-					vector <int> vecId;
-					bool input = true;
-					while (input)
-					{
-						int id = tryInput("Please, enter correct id of next pipe you want to edit or enter [0] to stop input: ", 0);
-						if (id != 0)
-						{
-							if (mapPipe.find(id) != mapPipe.end())
-							{
-								vecId.push_back(id);
-							}
-							else
-							{
-								cout << "Could not find this id" << endl;
-							}
-						}
-						else
-						{
-							input = false;
-						}
-					}
+					vector <int> vecId = inputVecId(mapPipe);
 					for (int& i : vecId)
 					{
 						mapPipe[i].editPipe();
@@ -489,27 +472,7 @@ int main()
 					break;
 				case 4:
 				{
-					vector <int> vecId;
-					bool input = true;
-					while (input)
-					{
-						int id = tryInput("Please, enter correct id of next pipe you want to edit or enter [0] to stop input: ", 0);
-						if (id != 0)
-						{
-							if (mapCS.find(id) != mapCS.end())
-							{
-								vecId.push_back(id);
-							}
-							else
-							{
-								cout << "Could not find this id" << endl;
-							}
-						}
-						else
-						{
-							input = false;
-						}
-					}
+					vector <int> vecId = inputVecId(mapCS);
 					for (int& i : vecId)
 					{
 						cout << mapCS[i];

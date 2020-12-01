@@ -41,6 +41,19 @@ void deleteObj(std::unordered_map <int, T>& myMap, int id) {
 }
 
 template <typename T>
+void swapValues(T& value1, T& value2)
+{
+	T temp = value1;
+	value1 = value2;
+	value2 = temp;
+}
+
+void stringAlert(std::string s)
+{
+	std::cout << std::endl << s << std::endl;
+}
+
+template <typename T>
 std::vector <int> inputVecId(std::unordered_map <int, T> myMap)
 {
 	std::vector <int> vecId;

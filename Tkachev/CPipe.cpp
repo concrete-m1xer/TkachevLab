@@ -50,6 +50,11 @@ bool CPipe::getRepair() const
 	return repair;
 }
 
+double CPipe::getPressureDropValue() const
+{
+	return length/diameter;
+}
+
 //void CPipe::setId(int newId)
 //{
 //	id = newId;

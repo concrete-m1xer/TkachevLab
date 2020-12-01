@@ -21,6 +21,7 @@ public:
 	int getDiameter() const;
 	double getLength() const;
 	bool getRepair() const;
+	double getPressureDropValue() const;
 
 	//void setId(int newId);
 	//void setDiameter(int newDiameter);

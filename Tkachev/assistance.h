@@ -20,15 +20,38 @@ T tryInput(std::string alert, T min, T max = 1000000)
 }
 
 template <typename T>
+int tryInput(std::string alert, const std::unordered_map <int, T>& myMap)
+{
+	if (!myMap.empty())
+	{
+		int x;
+		std::cout << alert;
+		while ((std::cin >> x).fail() || myMap.find(x) == myMap.end())
+		{
+			if (x == 0)
+				return 0;
+			std::cin.clear();
+			std::cin.ignore(10000, '\n');
+			std::cout << alert;
+		}
+		return x;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+template <typename T>
 // если есть id больше 1, то находит больше 1, если вектор пустой, то 0
-int findMaxId(const std::unordered_map <int, T>& myMap)
+int findMaxId(const T& myMap)
 {
 	int maxId = 0;
 	for (const auto& p : myMap)
 	{
-		if (p.second.getId() > maxId)
+		if (p.first > maxId)
 		{
-			maxId = p.second.getId();
+			maxId = p.first;
 		}
 	}
 	return maxId;
@@ -46,11 +69,6 @@ void swapValues(T& value1, T& value2)
 	T temp = value1;
 	value1 = value2;
 	value2 = temp;
-}
-
-void stringAlert(std::string s)
-{
-	std::cout << std::endl << s << std::endl;
 }
 
 template <typename T>

@@ -52,7 +52,12 @@ bool CPipe::getRepair() const
 
 double CPipe::getPressureDropValue() const
 {
-	return length/diameter;
+	return length* 1.0/diameter;
+}
+
+double CPipe::getPerformance() const
+{
+	return diameter* 1.0/length;
 }
 
 //void CPipe::setId(int newId)

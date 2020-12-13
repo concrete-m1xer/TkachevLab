@@ -22,6 +22,7 @@ public:
 	double getLength() const;
 	bool getRepair() const;
 	double getPressureDropValue() const;
+	double getPerformance() const;
 
 	//void setId(int newId);
 	//void setDiameter(int newDiameter);

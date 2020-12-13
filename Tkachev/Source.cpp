@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "CPipe.h"
 #include "CCompressorStation.h"
+#include "CGraph.h"
 #include "assistance.h"
 
 using namespace std;
@@ -114,6 +115,7 @@ template <typename C, typename T>
 		 << "13 - Batch editing of pipes \n"
 		 << "14 - Find required compretion stations \n"
 		 << "15 - Batch editing of compretion stations \n"
+		 << "16 - Go to gas network menu \n"
 		 << "0 - Exit from Program" << std::endl;
  }
 
@@ -122,6 +124,7 @@ int main()
 	bool isRunning = true;
 	unordered_map <int, CPipe> mapPipe;
 	unordered_map <int, CCompressorStation> mapCS;
+	CGraph gasNetwork;
 	while (isRunning) 
 	{
 		printMenu();
@@ -168,6 +171,16 @@ int main()
 				{
 					it->second.editPipe();
 					cout << it->second;
+					int idN = tryInput("Replace broken pipe: ", mapPipe);
+					unordered_map<int, CPipe>::iterator iter = mapPipe.find(idN);
+					if (!iter->second.getRepair())
+					{
+						gasNetwork.ReplaceEdge(it->first, idN, iter->second.getPressureDropValue(), true);
+					}
+					else
+					{
+						gasNetwork.DeleteEdge(it->first);
+					}
 				}
 				else
 				{
@@ -276,6 +289,7 @@ int main()
 				if (mapPipe.find(id) != mapPipe.end())
 				{
 					deleteObj(mapPipe, id);
+					gasNetwork.DeleteEdge(id);
 				}
 				else
 				{
@@ -294,6 +308,7 @@ int main()
 				if (mapCS.find(id) != mapCS.end())
 				{
 					deleteObj(mapCS, id);
+					gasNetwork.DeleteVertex(id);
 				}
 				else
 				{
@@ -489,6 +504,191 @@ int main()
 			{
 				cout << endl << "At first, add station \n" << endl;
 			}
+			break;
+		case 16:
+		{
+			if (mapCS.size() >= 2 && !mapPipe.empty())
+			{
+				bool editingNet = true;
+				while (editingNet)
+				{
+					cout << "1 - connect compressor stations with pipe\n"
+						<< "2 - do topological sorting\n"
+						<< "3 - show current network\n"
+						<< "4 - save network to file\n"
+						<< "5 - load network from file\n"
+						<< "6 - delete compressor stacion from network\n"
+						<< "7 - delete pipe from network\n"
+						<< "8 - change pipe\n"
+						<< "9 - find maximum flow\n"
+						<< "10 - find minimal path\n"
+						//<< "9 - swap compressor stations\n"
+						<< "0 - exit from this menu to main menu\n";
+					switch (tryInput("Please, chose an action: ", 0))
+					{
+					case 1:
+					{
+						for (auto& p : mapCS)
+						{
+							cout << p.first << endl;
+						}
+						cout << "^ all avaliable id of compressor stations" << endl;
+						int IdF = tryInput("Please, enter id of first avaliable compressor station (or [0] to leave): ", mapCS);
+						int IdS = tryInput("Please, enter id of second avaliable compressor station (or [0] to leave): ", mapCS);
+						if (IdF != 0 && IdS != 0)
+						{
+							for (auto& p : mapPipe)
+							{
+								if (!p.second.getRepair() && !gasNetwork.HasEdge(p.first))
+								{
+									cout << p.first << endl;
+								}
+							}
+							cout << "^ all available id of pipes" << endl;
+							int IdE = tryInput("Please, enter id of avaliable pipe (or [0] to leave): ", mapPipe);
+							if (IdE != 0)
+							{
+								auto iter = mapPipe.find(IdE);
+								if (!iter->second.getRepair() && !gasNetwork.HasEdge(iter->first))
+								{
+									bool IsStraight = tryInput<bool>("If this pipe comes from first to second? ([0] - revers, [1] - yes): ", 0, 1);
+									gasNetwork.ConnectDirected(IdF, IdS, IdE, iter->second.getPressureDropValue(), iter->second.getPerformance(), IsStraight);
+								}
+								else
+								{
+									cout << "this pipe send for repair, choose another one" << endl;
+								}
+							}
+							else
+							{
+								cout << "Pipe does not exist ";
+							}
+						}
+						break;
+					}
+					case 2:
+					{
+						cout << "topological sorting" << endl;
+						auto sort = gasNetwork.TopologicalSorting();
+						for (unsigned int i = 0; i < sort.size(); i++)
+						{
+							cout << i + 1 << "      " << sort[i] << endl;
+						}
+						if (!sort.empty())
+						{
+							if (tryInput<bool>("Would you like to see compressor stations? ([1] - yes, [0] - no): ", 0, 1))
+							{
+								for (int i : sort)
+								{
+									cout << mapCS[i];
+								}
+							}
+						}
+						else
+						{
+							std::cout << "has cycle" << std::endl;
+						}
+						break;
+					}
+					case 3:
+					{
+						cout << gasNetwork;
+						break;
+					}
+					case 4:
+					{
+						string filename = "";
+						cout << "Please, enter file name: ";
+						cin >> filename;
+						ofstream fout;
+						fout.open(filename+".txt", ios::out);
+						if (fout.is_open())
+						{
+							fout << gasNetwork;
+						}
+						fout.close();
+						break;
+					}
+					case 5:
+					{
+						string filename = "";
+						cout << "Please, enter file name: ";
+						cin >> filename;
+						ifstream fin;
+						fin.open(filename+".txt", ios::in);
+						if (fin.is_open())
+						{
+							fin >> gasNetwork;
+						}
+						fin.close();
+						break;
+					}
+					case 6:
+					{
+						gasNetwork.DeleteVertex(tryInput("Please, enter id of compressor station you want to delete: ", mapCS));
+						break;
+					}
+					case 7:
+					{
+						gasNetwork.DeleteEdge(tryInput("Please, enter id of pipe you want to delete: ", mapPipe));
+						break;
+					}
+					case 8:
+					{
+						int IdO = tryInput("Please, enter id of pipe you want to replace: ", mapPipe);
+						if (IdO != 0)
+						{
+							int IdN = tryInput("Please, enter id of pipe with which you would like to replace old one: ", mapPipe);
+							if (!mapPipe[IdN].getRepair())
+							{
+								bool IsStraght = tryInput<bool>("If this pipe comes from first to second? ([0] - revers, [1] - yes): ", 0, 1);
+								gasNetwork.ReplaceEdge(IdO, IdN, mapPipe[IdN].getPressureDropValue(), IsStraght);
+							}
+						}
+						break;
+					}
+					case 9:
+					{
+						int IdS = 0, IdT = 0;
+						IdS = tryInput("Please, enter source compressor station id ([0] - leave) : ", mapCS);
+						if (IdS != 0)
+						{
+							IdT = tryInput("Please, enter target compresor station id ([0] - leave) : ", mapCS);
+							if (IdT != 0)
+							{
+								cout << "Maximum flow: " << gasNetwork.MaxFlow(IdS, IdT) << endl;
+							}
+						}
+						break;
+					}
+					case 10: 
+					{
+						int IdS = 0, IdF = 0;
+						IdS = tryInput("Please, enter start compressor station id ([0] - leave) : ", mapCS);
+						if (IdS != 0)
+						{
+							IdF = tryInput("Please, enter finish compresor station id ([0] - leave) : ", mapCS);
+							if (IdF != 0)
+							{
+								cout << "Minimal path: " << gasNetwork.MinPath(IdS, IdF) << endl;
+							}
+						}
+					}	
+						break;
+					case 0:
+						editingNet = false;
+						break;
+					default:
+						cout << "This action is unacceptable " << endl;
+						break;
+					}
+				}
+			}
+			else
+			{
+				cout << "At first add pipe and compressor station " << endl;
+			}
+		}
 			break;
 		case 0: 
 			isRunning = false;

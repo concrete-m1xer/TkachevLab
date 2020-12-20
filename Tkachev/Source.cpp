@@ -171,16 +171,7 @@ int main()
 				{
 					it->second.editPipe();
 					cout << it->second;
-					int idN = tryInput("Replace broken pipe: ", mapPipe);
-					unordered_map<int, CPipe>::iterator iter = mapPipe.find(idN);
-					if (!iter->second.getRepair())
-					{
-						gasNetwork.ReplaceEdge(it->first, idN, iter->second.getPressureDropValue(), true);
-					}
-					else
-					{
-						gasNetwork.DeleteEdge(it->first);
-					}
+					gasNetwork.ResetEdge(it->first, it->second.getRepair(), it->second.getPerformance(), it->second.getPressureDropValue());
 				}
 				else
 				{
@@ -670,7 +661,15 @@ int main()
 							IdF = tryInput("Please, enter finish compresor station id ([0] - leave) : ", mapCS);
 							if (IdF != 0)
 							{
-								cout << "Minimal path: " << gasNetwork.MinPath(IdS, IdF) << endl;
+								double path = gasNetwork.MinPath(IdS, IdF);
+								if (path != 0)
+								{
+									cout << "Minimal path: " << path << endl;
+								}
+								else
+								{
+									cout << "No path" << endl;
+								}
 							}
 						}
 					}	

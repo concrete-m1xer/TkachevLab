@@ -36,6 +36,7 @@ public:
 	double MaxFlow(int SourceId, int TargetId) const;
 	double MinPath(int StartId, int EndId) const;
 	bool HasEdge(int Id) const;
+	void ResetEdge(int Id, bool IsBroken, double Capacity, double Weight);
 	friend std::ostream& operator << (std::ostream& out, const CGraph& G);
 	friend std::istream& operator >> (std::istream& in, CGraph& G);
 	friend std::ifstream& operator >> (std::ifstream& fin, CGraph& G);

@@ -314,25 +314,44 @@ double CGraph::MinPath(int StartId, int EndId) const
     {
         double minimalPath = 0.0;
         std::vector<std::vector<int>> Paths = FindAllPaths(StartId, EndId);
-        for (int id : Paths[0])
+        std::vector<int> IdPaths;
+        if (!Paths.empty())
         {
-            auto it = MapEdge.find(id);
-            minimalPath += it->second.Weight;
-        }
-        for (const auto& vec : FindAllPaths(StartId, EndId))
-        {
-            double CurrentPath = 0;
-            for (int id : vec)
+            for (int id : Paths[0])
             {
                 auto it = MapEdge.find(id);
-                CurrentPath += it->second.Weight;
+                minimalPath += it->second.Weight;
             }
-            if (CurrentPath < minimalPath)
+            for (const auto& vec : Paths)
             {
-                minimalPath = CurrentPath;
+                double CurrentPath = 0.0;
+                for (int id : vec)
+                {
+                    auto it = MapEdge.find(id);
+                    CurrentPath += it->second.Weight;
+                }
+                if (CurrentPath < minimalPath)
+                {
+                    minimalPath = CurrentPath;
+                    IdPaths = vec;
+                }
             }
         }
-        return minimalPath;
+        if (minimalPath >= INT_MAX)
+        {
+            StringAlert("InFiNyTy");
+            IdPaths.clear();
+            return 0.0;
+        }
+        else
+        {
+            for (int Id : IdPaths)
+            {
+                std::cout << Id << "  ";
+            }
+            std::cout << std::endl;
+            return minimalPath;
+        }
     }
     else 
     {
@@ -412,6 +431,25 @@ bool CGraph::HasEdge(int Id) const
     else
     {
         return false;
+    }
+}
+
+void CGraph::ResetEdge(int Id, bool IsBroken, double Capacity, double Weight)
+{
+    if (HasEdge(Id))
+    {
+
+        auto it = MapEdge.find(Id);
+        if (IsBroken)
+        {
+            it->second.Capacity = 0;
+            it->second.Weight = INT_MAX;
+        }
+        else
+        {
+            it->second.Capacity = Capacity;
+            it->second.Weight = Weight;
+        }
     }
 }
 
